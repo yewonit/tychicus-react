@@ -1,0 +1,299 @@
+# React 교회 출석 관리 시스템 - 커서룰
+
+## 프로젝트 개요
+Vue.js에서 React로 마이그레이션하는 교회 출석 관리 시스템입니다. 기존 디자인 시스템의 색상과 타이포그래피를 유지하면서 모바일 최적화된 UI를 구현합니다.
+
+## 기술 스택
+- React 18 + TypeScript
+- CSS-in-JS (styled-components 선호)
+- React Router v6
+- Context API + useReducer (가벼운 상태 관리)
+- 순수 React (Material-UI 대신 커스텀 컴포넌트)
+
+## 색상 시스템
+기존 Vue 프로젝트의 민트-스카이블루 테마를 그대로 활용:
+
+```css
+:root {
+  /* 메인 색상 - 민트와 하늘색 조화 */
+  --primary: #4ecdc4;           /* 민트 그린 */
+  --primary-light: #a6e7e2;    /* 연한 민트 */
+  --primary-dark: #3aa39b;     /* 진한 민트 */
+  
+  --secondary: #5dade2;         /* 스카이 블루 */
+  --secondary-light: #8cd6ff;  /* 연한 스카이 블루 */
+  --secondary-dark: #0096ee;   /* 진한 스카이 블루 */
+  
+  --accent: #a8e6cf;           /* 연한 민트 악센트 */
+  
+  /* 시스템 색상 */
+  --success: #66bb6a;          /* 성공 그린 */
+  --warning: #ffa726;          /* 주황색 */
+  --error: #ef5350;            /* 부드러운 빨강 */
+  --info: #85c1e9;             /* 밝은 하늘색 */
+  
+  /* 그라데이션 */
+  --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+  
+  /* 텍스트 색상 */
+  --text-primary: #2c3e50;     /* 메인 텍스트 */
+  --text-secondary: #455a64;   /* 보조 텍스트 */
+  --text-tertiary: #78909c;    /* 비활성 텍스트 */
+  --text-disabled: #85929e;    /* 비활성화 텍스트 */
+  
+  /* 배경 색상 */
+  --bg-primary: #fdfefe;       /* 메인 배경 */
+  --bg-secondary: #f8fdff;     /* 보조 배경 */
+  --bg-card: #f9fbfd;          /* 카드 배경 */
+  --bg-elevated: #ffffff;      /* 높은 계층 배경 */
+  
+  /* 테두리 및 구분선 */
+  --border-light: #e0f2f1;     /* 연한 테두리 */
+  --border-medium: rgba(0,0,0,0.12); /* 중간 테두리 */
+  --border-dark: rgba(0,0,0,0.25);   /* 진한 테두리 */
+}
+```
+
+## 타이포그래피 시스템
+기존 NotoSansCJKKR 폰트 시스템을 React에서 활용:
+
+```css
+:root {
+  /* 폰트 패밀리 */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', Roboto, sans-serif;
+  
+  /* 폰트 크기 */
+  --font-size-huge: 48px;      /* 대형 제목 */
+  --font-size-xl: 36px;        /* 특대 */
+  --font-size-lg: 28px;        /* 큰 제목 */
+  --font-size-md: 22px;        /* 중간 제목 */
+  --font-size-base: 16px;      /* 기본 */
+  --font-size-sm: 14px;        /* 작은 텍스트 */
+  --font-size-xs: 12px;        /* 캡션 */
+  
+  /* 폰트 무게 */
+  --font-weight-bold: 700;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  
+  /* 라인 높이 */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+}
+```
+
+## 간격 시스템
+기존 4px 기반 간격 시스템 유지:
+
+```css
+:root {
+  /* 간격 - 4px 기반 */
+  --spacing-xs: 4px;    /* 1 */
+  --spacing-sm: 8px;    /* 2 */
+  --spacing-md: 16px;   /* 4 */
+  --spacing-lg: 24px;   /* 6 */
+  --spacing-xl: 32px;   /* 8 */
+  --spacing-2xl: 48px;  /* 12 */
+}
+```
+
+## 컴포넌트 구조
+모바일 우선의 컴포넌트 설계:
+
+```
+src/
+├── components/
+│   ├── ui/                    # 기본 UI 컴포넌트
+│   │   ├── Button/
+│   │   ├── Input/
+│   │   ├── Card/
+│   │   ├── Modal/
+│   │   └── Layout/
+│   ├── auth/                  # 인증 관련
+│   ├── attendance/            # 출석 관리
+│   ├── members/               # 회원 관리
+│   └── navigation/            # 네비게이션
+├── hooks/                     # 커스텀 훅
+├── contexts/                  # Context API
+├── utils/                     # 유틸리티
+├── types/                     # TypeScript 타입
+└── styles/                    # 글로벌 스타일
+```
+
+## 모바일 최적화 가이드라인
+
+### 터치 인터페이스
+- 최소 터치 타겟: 44px × 44px
+- 버튼 간격: 최소 8px
+- 스와이프 제스처 지원
+- 터치 피드백 (visual feedback)
+
+### 반응형 브레이크포인트
+```css
+:root {
+  --breakpoint-xs: 480px;   /* 작은 모바일 */
+  --breakpoint-sm: 768px;   /* 모바일 */
+  --breakpoint-md: 1024px;  /* 태블릿 */
+  --breakpoint-lg: 1280px;  /* 데스크톱 */
+  --breakpoint-xl: 1920px;  /* 대형 화면 */
+}
+```
+
+### 모바일 네비게이션
+- 하단 탭 네비게이션 (주요 기능)
+- 헤더의 뒤로가기/홈/취소 버튼
+- 사이드 드로어 (보조 메뉴)
+- 스크롤 시 헤더 숨김/표시
+
+## UI 컴포넌트 스타일 가이드
+
+### 버튼
+```jsx
+// 기본 버튼
+const Button = styled.button`
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 24px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  
+  /* Primary 버튼 */
+  &.primary {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.25);
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(78, 205, 196, 0.35);
+    }
+  }
+  
+  /* Secondary 버튼 */
+  &.secondary {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-medium);
+    
+    &:hover {
+      background: var(--bg-card);
+    }
+  }
+`;
+```
+
+### 카드
+```jsx
+const Card = styled.div`
+  background: var(--bg-elevated);
+  border-radius: 16px;
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-light);
+  
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+`;
+```
+
+### 입력 필드
+```jsx
+const Input = styled.input`
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--border-medium);
+  border-radius: 12px;
+  font-size: var(--font-size-base);
+  background: var(--bg-elevated);
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+  }
+  
+  &::placeholder {
+    color: var(--text-disabled);
+  }
+`;
+```
+
+## 애니메이션 가이드라인
+부드럽고 자연스러운 애니메이션:
+
+```css
+:root {
+  /* 애니메이션 지속시간 */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  
+  /* 이징 함수 */
+  --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0.0, 1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+```
+
+### 공통 애니메이션
+- 페이드인: opacity 0 → 1
+- 슬라이드업: transform translateY(20px) → 0
+- 스케일: transform scale(0.95) → 1
+- 터치 피드백: transform scale(0.98)
+
+## 접근성 가이드라인
+- 충분한 색상 대비 (WCAG AA 기준)
+- 키보드 네비게이션 지원
+- 스크린 리더 지원 (aria-label, role)
+- 포커스 표시 명확화
+
+## 성능 최적화
+- React.memo 적극 활용
+- useMemo, useCallback으로 불필요한 렌더링 방지
+- 이미지 lazy loading
+- 코드 스플리팅 (React.lazy)
+- Virtual scrolling (긴 목록)
+
+## 상태 관리 패턴
+Context API + useReducer 조합:
+
+```jsx
+// AuthContext 예시
+const AuthContext = createContext();
+
+const authReducer = (state, action) => {
+  switch (action.type) {
+    case 'LOGIN':
+      return { ...state, user: action.payload, isAuthenticated: true };
+    case 'LOGOUT':
+      return { ...state, user: null, isAuthenticated: false };
+    default:
+      return state;
+  }
+};
+```
+
+## 폴더 네이밍 컨벤션
+- 컴포넌트: PascalCase (Button, LoginForm)
+- 훅: camelCase (useAuth, useLocalStorage)
+- 유틸리티: camelCase (formatDate, validateEmail)
+- 상수: UPPER_SNAKE_CASE (API_ENDPOINTS, COLORS)
+
+## Git 커밋 컨벤션
+- feat: 새로운 기능
+- fix: 버그 수정
+- style: UI/스타일 변경
+- refactor: 코드 리팩토링
+- docs: 문서 수정
+- test: 테스트 추가/수정
+
+이 가이드라인을 따라 일관성 있고 사용자 친화적인 React 앱을 구축하세요!
