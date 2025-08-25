@@ -4,63 +4,15 @@ import {
   Box,
   Button,
   CircularProgress,
-  Container,
   Fade,
   IconButton,
-  Paper,
   TextField,
   Typography,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authCheckPhoneNumber, authCheckUserName } from '../../utils/authUtils';
-
-// 스타일드 컴포넌트
-const StyledContainer = styled(Container)(({ theme }) => ({
-  minHeight: '100vh',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: theme.spacing(2),
-}));
-
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
-  width: '100%',
-  maxWidth: 400,
-  borderRadius: 16,
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-}));
-
-const StyledTextField = styled(TextField)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
-  '& .MuiOutlinedInput-root': {
-    borderRadius: 12,
-  },
-}));
-
-const StyledButton = styled(Button)(({ theme }) => ({
-  height: 48,
-  borderRadius: 24,
-  fontSize: '1rem',
-  fontWeight: 600,
-  marginTop: theme.spacing(1),
-  background: 'linear-gradient(135deg, #4ecdc4 0%, #5dade2 100%)',
-  '&:hover': {
-    background: 'linear-gradient(135deg, #3aa39b 0%, #0096ee 100%)',
-    transform: 'translateY(-1px)',
-  },
-}));
-
-const HeaderBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  marginBottom: theme.spacing(3),
-  position: 'relative',
-  width: '100%',
-}));
 
 interface UserFindPageProps {}
 
@@ -93,6 +45,15 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // 성공 메시지 생성 헬퍼 함수
+  const createSuccessMessage = (hasDuplicates: boolean = false) => {
+    const baseMessage = `${formData.name}님, 반갑습니다!`;
+    if (hasDuplicates) {
+      return `${baseMessage}\n동명이인이 있습니다. 전화번호를 입력해주세요.`;
+    }
+    return `${baseMessage}\n전화번호를 입력해주세요.`;
+  };
+
   const handleInputChange =
     (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
       let value = event.target.value;
@@ -106,8 +67,14 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
         ...prev,
         [field]: value,
       }));
+
+      // 에러는 항상 지우기
       if (error) setError('');
-      if (success) setSuccess('');
+
+      // 전화번호 입력 시에는 성공 메시지 유지
+      if (success && field !== 'phoneNumber') {
+        setSuccess('');
+      }
     };
 
   // 이름 확인 로직
@@ -129,21 +96,15 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
           // 동명이인이 있는 경우
           setUserList(result.userList);
           setHasDuplicates(true);
-          setSuccess(
-            `${formData.name}님, 반갑습니다! 동명이인이 있습니다. 전화번호를 입력해주세요.`
-          );
+          setSuccess(createSuccessMessage(true));
         } else if (!result.hasDuplicates && result.userData) {
           // 단일 사용자
           setUserData(result.userData);
           setHasDuplicates(false);
-          setSuccess(
-            `${formData.name}님, 반갑습니다! 전화번호를 입력해주세요.`
-          );
+          setSuccess(createSuccessMessage(false));
         } else {
           // 기존 로직 (하위 호환성)
-          setSuccess(
-            `${formData.name}님, 반갑습니다! 전화번호를 입력해주세요.`
-          );
+          setSuccess(createSuccessMessage(false));
         }
         // 전화번호 입력 단계로 이동
         setStep('phone');
@@ -188,15 +149,16 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
 
         if (matchedUser) {
           setSuccess('전화번호가 일치합니다.');
-          // 이메일 인증 페이지로 이동
-          navigate('/email-verification', {
+          // 비밀번호 설정 페이지로 이동
+          navigate('/password-setup', {
             state: {
-              mode,
               userInfo: {
+                id: matchedUser.id,
                 name: formData.name,
                 phoneNumber: formData.phoneNumber,
               },
-              userData: matchedUser,
+              email: matchedUser.email,
+              emailVerified: true,
             },
           });
         } else {
@@ -207,15 +169,16 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
       else if (userData) {
         if (userData.phone_number === formData.phoneNumber) {
           setSuccess('전화번호가 일치합니다.');
-          // 이메일 인증 페이지로 이동
-          navigate('/email-verification', {
+          // 비밀번호 설정 페이지로 이동
+          navigate('/password-setup', {
             state: {
-              mode,
               userInfo: {
+                id: userData.id,
                 name: formData.name,
                 phoneNumber: formData.phoneNumber,
               },
-              userData: userData,
+              email: userData.email,
+              emailVerified: true,
             },
           });
         } else {
@@ -230,15 +193,22 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
         });
 
         if (result.result === 1 || result.isMatched) {
+          // 서버에서 사용자 ID를 반환했는지 확인
+          if (!result.userData?.id) {
+            setError('사용자 정보를 가져올 수 없습니다. 다시 시도해주세요.');
+            return;
+          }
+
           setSuccess('전화번호가 일치합니다.');
-          navigate('/email-verification', {
+          navigate('/password-setup', {
             state: {
-              mode,
               userInfo: {
+                id: result.userData.id, // 서버에서 반환받은 실제 사용자 ID
                 name: formData.name,
                 phoneNumber: formData.phoneNumber,
               },
-              userData: result.userData || null,
+              email: result.userData.email,
+              emailVerified: true,
             },
           });
         } else {
@@ -286,16 +256,6 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
     }
   };
 
-  const getDescription = () => {
-    if (step === 'name') {
-      return mode === 'reset'
-        ? '비밀번호를 재설정하기 위해 등록된 이름을 입력해주세요.'
-        : '가입하신 이름을 입력해주세요.';
-    } else {
-      return '전화번호를 입력해주세요.';
-    }
-  };
-
   const getIcon = () => {
     return step === 'name' ? (
       <AccountCircle sx={{ fontSize: 150, mb: 4, color: '#262626' }} />
@@ -313,9 +273,9 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
   };
 
   return (
-    <StyledContainer>
-      <StyledPaper elevation={0}>
-        <HeaderBox>
+    <div className='auth-container'>
+      <div className='auth-paper'>
+        <div className='header-box'>
           <IconButton
             onClick={handleBack}
             sx={{
@@ -338,7 +298,7 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
           >
             {getTitle()}
           </Typography>
-        </HeaderBox>
+        </div>
 
         {/* 아이콘 */}
         <Box textAlign='center' sx={{ mb: 2 }}>
@@ -350,9 +310,7 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
           color='text.secondary'
           textAlign='center'
           sx={{ mb: 3, lineHeight: 1.6 }}
-        >
-          {getDescription()}
-        </Typography>
+        ></Typography>
 
         {/* 성공 메시지 */}
         {success && (
@@ -361,6 +319,9 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
             sx={{
               mb: 2,
               borderRadius: 2,
+              '& .MuiAlert-message': {
+                whiteSpace: 'pre-line',
+              },
             }}
           >
             {success}
@@ -397,7 +358,8 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
           {/* 이름 입력 단계 */}
           {step === 'name' && (
             <Fade in={step === 'name'}>
-              <StyledTextField
+              <TextField
+                className='common-textfield'
                 fullWidth
                 label='터치해서 이름을 입력하세요'
                 variant='outlined'
@@ -414,7 +376,8 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
           {/* 전화번호 입력 단계 */}
           {step === 'phone' && (
             <Fade in={step === 'phone'}>
-              <StyledTextField
+              <TextField
+                className='common-textfield'
                 fullWidth
                 label='터치해서 전화번호를 입력하세요'
                 variant='outlined'
@@ -433,7 +396,8 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
             </Fade>
           )}
 
-          <StyledButton
+          <Button
+            className='common-button'
             type='submit'
             fullWidth
             variant='contained'
@@ -445,7 +409,7 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
             ) : (
               getButtonText()
             )}
-          </StyledButton>
+          </Button>
         </Box>
 
         {/* 하단 안내 텍스트 */}
@@ -477,8 +441,8 @@ const UserFindPage: React.FC<UserFindPageProps> = () => {
             로그인하기
           </Button>
         </Box>
-      </StyledPaper>
-    </StyledContainer>
+      </div>
+    </div>
   );
 };
 

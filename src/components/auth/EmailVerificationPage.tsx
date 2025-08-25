@@ -5,13 +5,11 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Container,
   IconButton,
-  Paper,
   TextField,
   Typography,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -21,63 +19,10 @@ import {
   authVerifyCode,
 } from '../../utils/authUtils';
 
-// 스타일드 컴포넌트
-const StyledContainer = styled(Container)(({ theme }) => ({
-  minHeight: '100vh',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: theme.spacing(2),
-}));
-
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
-  width: '100%',
-  maxWidth: 400,
-  borderRadius: 16,
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-}));
-
-const StyledTextField = styled(TextField)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
-  '& .MuiOutlinedInput-root': {
-    borderRadius: 12,
-  },
-}));
-
-const StyledButton = styled(Button)(({ theme }) => ({
-  height: 48,
-  borderRadius: 24,
-  fontSize: '1rem',
-  fontWeight: 600,
-  marginTop: theme.spacing(1),
-  background: 'linear-gradient(135deg, #4ecdc4 0%, #5dade2 100%)',
-  '&:hover': {
-    background: 'linear-gradient(135deg, #3aa39b 0%, #0096ee 100%)',
-    transform: 'translateY(-1px)',
-  },
-}));
-
-const HeaderBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  marginBottom: theme.spacing(3),
-  position: 'relative',
-  width: '100%',
-}));
-
-const UserInfoBox = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.grey[50],
-  padding: theme.spacing(2),
-  borderRadius: 12,
-  marginBottom: theme.spacing(3),
-  border: `1px solid ${theme.palette.grey[200]}`,
-}));
-
 interface LocationState {
   mode: 'register' | 'reset';
   userInfo: {
+    id: string;
     name: string;
     phoneNumber: string;
   };
@@ -99,9 +44,9 @@ const EmailVerificationPage: React.FC = () => {
     }
   }, [state, navigate]);
 
-  const [step, setStep] = useState<'email' | 'verification' | 'password'>(
-    'email'
-  );
+  const [step, setStep] = useState<
+    'email' | 'send' | 'verification' | 'password'
+  >('email');
   const [formData, setFormData] = useState({
     email: state?.userData?.email || '',
     verificationCode: '',
@@ -116,11 +61,11 @@ const EmailVerificationPage: React.FC = () => {
   );
 
   useEffect(() => {
-    // 사용자 데이터에 이메일이 있으면 자동으로 인증번호 발송 화면으로
+    // 사용자 데이터에 이메일이 있으면 인증번호 발송 단계로
     if (state?.userData?.email) {
       setFormData(prev => ({ ...prev, email: state.userData?.email || '' }));
       setIsEmailReadonly(true);
-      setStep('verification');
+      setStep('send');
     }
   }, [state]);
 
@@ -134,7 +79,8 @@ const EmailVerificationPage: React.FC = () => {
       if (success) setSuccess('');
     };
 
-  const handleEmailSubmit = async () => {
+  // 이메일 확인 후 발송 단계로 이동
+  const handleEmailCheck = async () => {
     if (!formData.email.trim()) {
       setError('이메일을 입력해주세요.');
       return;
@@ -160,6 +106,23 @@ const EmailVerificationPage: React.FC = () => {
         }
       }
 
+      // 이메일 유효성만 확인하고 발송 단계로 이동
+      setSuccess('이메일이 확인되었습니다. 인증번호를 발송하세요.');
+      setStep('send');
+    } catch (error: any) {
+      console.error('이메일 확인 오류:', error);
+      setError('이메일 확인 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 인증번호 발송
+  const handleEmailSubmit = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
       // 인증번호 발송
       const result = await authCheckEmail(formData.email);
       if (result.result === 1) {
@@ -197,8 +160,8 @@ const EmailVerificationPage: React.FC = () => {
           // 비밀번호 재설정 모드인 경우 비밀번호 입력 단계로
           setStep('password');
         } else {
-          // 신규 가입 모드인 경우 회원가입 페이지로 이동
-          navigate('/member-registration', {
+          // 신규 가입 모드인 경우 비밀번호 설정 페이지로 이동
+          navigate('/password-setup', {
             state: {
               userInfo: state.userInfo,
               email: formData.email,
@@ -262,6 +225,8 @@ const EmailVerificationPage: React.FC = () => {
     event.preventDefault();
 
     if (step === 'email') {
+      await handleEmailCheck();
+    } else if (step === 'send') {
       await handleEmailSubmit();
     } else if (step === 'verification') {
       await handleCodeVerification();
@@ -273,12 +238,14 @@ const EmailVerificationPage: React.FC = () => {
   const handleBack = () => {
     if (step === 'email') {
       navigate(-1);
-    } else if (step === 'verification') {
+    } else if (step === 'send') {
       if (isEmailReadonly) {
         navigate(-1);
       } else {
         setStep('email');
       }
+    } else if (step === 'verification') {
+      setStep('send');
     } else if (step === 'password') {
       setStep('verification');
     }
@@ -305,6 +272,8 @@ const EmailVerificationPage: React.FC = () => {
   const getTitle = () => {
     if (step === 'email') {
       return '이메일 인증';
+    } else if (step === 'send') {
+      return '인증번호 발송';
     } else if (step === 'verification') {
       return '인증번호 확인';
     } else {
@@ -324,9 +293,9 @@ const EmailVerificationPage: React.FC = () => {
   }
 
   return (
-    <StyledContainer>
-      <StyledPaper elevation={0}>
-        <HeaderBox>
+    <div className='auth-container'>
+      <div className='auth-paper'>
+        <div className='header-box'>
           <IconButton
             onClick={handleBack}
             sx={{
@@ -355,10 +324,10 @@ const EmailVerificationPage: React.FC = () => {
               {getTitle()}
             </Typography>
           </Box>
-        </HeaderBox>
+        </div>
 
         {/* 사용자 정보 표시 */}
-        <UserInfoBox>
+        <div className='user-info-box'>
           <Typography variant='body2' color='text.secondary' gutterBottom>
             확인된 사용자 정보
           </Typography>
@@ -369,7 +338,7 @@ const EmailVerificationPage: React.FC = () => {
               size='small'
             />
           </Box>
-        </UserInfoBox>
+        </div>
 
         {error && (
           <Alert
@@ -408,7 +377,8 @@ const EmailVerificationPage: React.FC = () => {
                   : '가입할 이메일 주소를 입력해주세요.'}
               </Typography>
 
-              <StyledTextField
+              <TextField
+                className='common-textfield'
                 fullWidth
                 label='이메일'
                 type='email'
@@ -423,7 +393,47 @@ const EmailVerificationPage: React.FC = () => {
                 }}
               />
 
-              <StyledButton
+              <Button
+                type='submit'
+                fullWidth
+                variant='contained'
+                disabled={loading}
+              >
+                {loading ? (
+                  <CircularProgress size={24} color='inherit' />
+                ) : (
+                  '이메일 확인'
+                )}
+              </Button>
+            </>
+          )}
+
+          {step === 'send' && (
+            <>
+              <Typography
+                variant='body1'
+                color='text.secondary'
+                sx={{ mb: 3, lineHeight: 1.6 }}
+              >
+                <strong>{formData.email}</strong>로 인증번호를 발송합니다.
+                <br />
+                아래 버튼을 클릭하여 인증번호를 받으세요.
+              </Typography>
+
+              <TextField
+                fullWidth
+                label='이메일'
+                type='email'
+                variant='outlined'
+                value={formData.email}
+                disabled={true}
+                InputProps={{
+                  readOnly: true,
+                }}
+                sx={{ mb: 2 }}
+              />
+
+              <Button
                 type='submit'
                 fullWidth
                 variant='contained'
@@ -434,7 +444,7 @@ const EmailVerificationPage: React.FC = () => {
                 ) : (
                   '인증번호 발송'
                 )}
-              </StyledButton>
+              </Button>
             </>
           )}
 
@@ -449,7 +459,7 @@ const EmailVerificationPage: React.FC = () => {
                 입력해주세요.
               </Typography>
 
-              <StyledTextField
+              <TextField
                 fullWidth
                 label='인증번호'
                 variant='outlined'
@@ -460,7 +470,7 @@ const EmailVerificationPage: React.FC = () => {
                 inputProps={{ maxLength: 6 }}
               />
 
-              <StyledButton
+              <Button
                 type='submit'
                 fullWidth
                 variant='contained'
@@ -471,7 +481,7 @@ const EmailVerificationPage: React.FC = () => {
                 ) : (
                   '인증번호 확인'
                 )}
-              </StyledButton>
+              </Button>
 
               <Button
                 fullWidth
@@ -495,7 +505,7 @@ const EmailVerificationPage: React.FC = () => {
                 새로운 비밀번호를 설정해주세요.
               </Typography>
 
-              <StyledTextField
+              <TextField
                 fullWidth
                 label='새 비밀번호'
                 type='password'
@@ -507,7 +517,7 @@ const EmailVerificationPage: React.FC = () => {
                 autoComplete='new-password'
               />
 
-              <StyledTextField
+              <TextField
                 fullWidth
                 label='비밀번호 확인'
                 type='password'
@@ -519,7 +529,7 @@ const EmailVerificationPage: React.FC = () => {
                 autoComplete='new-password'
               />
 
-              <StyledButton
+              <Button
                 type='submit'
                 fullWidth
                 variant='contained'
@@ -530,7 +540,7 @@ const EmailVerificationPage: React.FC = () => {
                 ) : (
                   '비밀번호 재설정'
                 )}
-              </StyledButton>
+              </Button>
             </>
           )}
         </Box>
@@ -547,8 +557,8 @@ const EmailVerificationPage: React.FC = () => {
             로그인 화면으로 돌아가기
           </Button>
         </Box>
-      </StyledPaper>
-    </StyledContainer>
+      </div>
+    </div>
   );
 };
 

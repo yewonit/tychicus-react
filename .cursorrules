@@ -5,10 +5,12 @@ Vue.js에서 React로 마이그레이션하는 교회 출석 관리 시스템입
 
 ## 기술 스택
 - React 18 + TypeScript
-- CSS-in-JS (styled-components 선호)
+- 단일 CSS 파일 기반 스타일 관리 (src/styles/global.css)
 - React Router v6
-- Context API + useReducer (가벼운 상태 관리)
-- 순수 React (Material-UI 대신 커스텀 컴포넌트)
+- Redux Toolkit (상태 관리)
+- Material-UI + 커스텀 CSS 클래스
+- 커스텀 훅 시스템 (src/hooks/)
+- 공통 UI 컴포넌트 시스템 (src/components/ui/)
 
 ## 색상 시스템
 기존 Vue 프로젝트의 민트-스카이블루 테마를 그대로 활용:
@@ -105,21 +107,32 @@ Vue.js에서 React로 마이그레이션하는 교회 출석 관리 시스템입
 ```
 src/
 ├── components/
-│   ├── ui/                    # 기본 UI 컴포넌트
-│   │   ├── Button/
-│   │   ├── Input/
-│   │   ├── Card/
-│   │   ├── Modal/
-│   │   └── Layout/
+│   ├── ui/                    # 공통 UI 컴포넌트
+│   │   ├── Button.tsx         # 공통 버튼
+│   │   ├── FormField.tsx      # 공통 폼 필드
+│   │   ├── Card.tsx          # 공통 카드
+│   │   ├── LoadingSpinner.tsx # 로딩 스피너
+│   │   └── index.ts          # Export 파일
 │   ├── auth/                  # 인증 관련
 │   ├── attendance/            # 출석 관리
 │   ├── members/               # 회원 관리
-│   └── navigation/            # 네비게이션
+│   ├── main/                  # 메인 페이지
+│   └── layouts/               # 레이아웃
 ├── hooks/                     # 커스텀 훅
-├── contexts/                  # Context API
+│   ├── useForm.ts            # 폼 상태 관리
+│   ├── useToggle.ts          # 토글 상태 관리
+│   ├── useDebounce.ts        # 디바운스
+│   └── index.ts              # Export 파일
 ├── utils/                     # 유틸리티
+│   ├── validation.ts         # 폼 검증 함수
+│   ├── authUtils.ts          # 인증 유틸리티
+│   └── axiosClient.ts        # API 클라이언트
+├── store/                     # Redux 상태 관리
+│   ├── index.ts              # Store 설정
+│   └── slices/               # Redux slices
 ├── types/                     # TypeScript 타입
 └── styles/                    # 글로벌 스타일
+    └── global.css            # 단일 CSS 파일
 ```
 
 ## 모바일 최적화 가이드라인
@@ -281,6 +294,162 @@ const authReducer = (state, action) => {
   }
 };
 ```
+
+## 스타일 관리 가이드라인
+
+### CSS 파일 구조
+```
+src/styles/
+├── global.css          # 전역 스타일 및 CSS 변수
+└── welcome.css         # 페이지별 특수 스타일
+```
+
+### 공통 CSS 클래스 사용법
+
+#### 인증 페이지 레이아웃
+```jsx
+// styled-components 사용하지 않음
+<div className="auth-container">
+  <div className="auth-paper">
+    <div className="header-box">
+      {/* 헤더 내용 */}
+    </div>
+    <div className="user-info-box">
+      {/* 사용자 정보 */}
+    </div>
+    <div className="input-group">
+      <TextField className="common-textfield" />
+    </div>
+    <div className="button-group full-width">
+      <Button className="common-button" />
+    </div>
+  </div>
+</div>
+```
+
+#### 주요 CSS 클래스들
+- `.auth-container`: 인증 페이지 전체 컨테이너
+- `.auth-paper`: 인증 페이지 메인 카드
+- `.header-box`: 헤더 영역 (뒤로가기 + 제목)
+- `.user-info-box`: 사용자 정보 표시 박스
+- `.common-textfield`: 공통 텍스트 필드 스타일
+- `.common-button`: 공통 버튼 스타일 (그라데이션)
+- `.common-card`: 일반 카드 컴포넌트
+- `.input-group`: 입력 필드 그룹
+- `.button-group`: 버튼 그룹 (`.centered`, `.full-width` 수정자)
+- `.welcome-container`: 웰컴 페이지 컨테이너
+- `.welcome-image`: 웰컴 페이지 이미지
+- `.welcome-text`: 웰컴 페이지 텍스트
+
+### CSS 변수 활용
+Material-UI sx prop에서도 CSS 변수 사용:
+```jsx
+<IconButton sx={{ color: 'var(--primary)' }} />
+<Button sx={{ 
+  background: 'var(--gradient-primary)',
+  '&:hover': { background: 'var(--gradient-secondary)' }
+}} />
+```
+
+### 스타일 우선순위
+1. **CSS 클래스** (global.css)
+2. **Material-UI sx prop** (필요시에만)
+3. **인라인 스타일** (절대 피할 것)
+
+### ⚠️ 중요: styled-components 사용 금지
+- 모든 스타일은 `src/styles/global.css`에서 관리
+- 새로운 styled-components 생성 금지
+- 기존 styled-components는 CSS 클래스로 리팩토링
+
+## 클린 코드 가이드라인
+
+### 커스텀 훅 활용
+```typescript
+// 폼 상태 관리
+import { useForm } from '../hooks';
+
+const form = useForm({
+  initialValues: { email: '', password: '' },
+  validationRules: {
+    email: validationRules.email,
+    password: validationRules.password,
+  },
+  onSubmit: async (data) => { /* 제출 로직 */ },
+});
+
+// 사용법
+<FormField
+  value={form.values.email}
+  onChange={form.handleChange('email')}
+  onBlur={form.handleBlur('email')}
+  error={form.errors.email}
+  touched={form.touched.email}
+/>
+```
+
+### 공통 컴포넌트 사용
+```typescript
+// Material-UI 대신 공통 컴포넌트 사용
+import { Button, FormField, Card, LoadingSpinner } from '../components/ui';
+
+// 로딩 상태
+if (loading) return <LoadingSpinner message="로딩 중..." />;
+
+// 폼 필드
+<FormField
+  label="이메일"
+  error={errors.email}
+  touched={touched.email}
+  helperText="이메일을 입력해주세요"
+/>
+
+// 버튼
+<Button variant="primary" loading={isSubmitting}>
+  제출
+</Button>
+```
+
+### 검증 유틸리티 활용
+```typescript
+import { validationRules, commonValidators } from '../utils/validation';
+
+// 기본 검증 규칙
+const rules = {
+  email: validationRules.email,
+  password: validationRules.password,
+  confirmPassword: (value) => 
+    validationRules.confirmPassword(value, formData.password),
+};
+
+// 복합 검증 규칙
+const rules = {
+  email: commonValidators.requiredEmail,
+  name: commonValidators.requiredName,
+  phoneNumber: commonValidators.requiredPhoneNumber,
+};
+```
+
+### 코드 구조 원칙
+
+#### 1. DRY (Don't Repeat Yourself)
+- 중복 로직은 커스텀 훅으로 추출
+- 공통 UI 패턴은 컴포넌트로 추출
+- 검증 로직은 validation 유틸리티 사용
+
+#### 2. 단일 책임 원칙
+- 컴포넌트는 하나의 책임만 가짐
+- 훅은 특정 기능에 집중
+- 유틸리티 함수는 순수 함수로 작성
+
+#### 3. 가독성 우선
+- 명확한 변수명과 함수명 사용
+- 복잡한 로직은 별도 함수로 분리
+- 주석보다는 코드 자체가 설명되도록 작성
+
+#### 4. 성능 고려
+- useCallback, useMemo 적절히 활용
+- 불필요한 리렌더링 방지
+- 컴포넌트 lazy loading 고려
 
 ## 폴더 네이밍 컨벤션
 - 컴포넌트: PascalCase (Button, LoginForm)

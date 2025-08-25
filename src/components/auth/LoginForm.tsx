@@ -16,7 +16,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { AppDispatch, RootState } from '../../store';
 import { login } from '../../store/slices/authSlice';
-import './LoginForm.css';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -71,7 +70,7 @@ const LoginForm: React.FC = () => {
             type='email'
             value={email}
             onChange={e => setEmail(e.target.value)}
-            className='input-field'
+            className='login-input-field'
             autoComplete='username'
             InputProps={{
               style: { fontSize: '1rem', textAlign: 'center' },
@@ -84,7 +83,7 @@ const LoginForm: React.FC = () => {
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={e => setPassword(e.target.value)}
-            className='input-field'
+            className='login-input-field'
             autoComplete='current-password'
             InputProps={{
               style: { fontSize: '1rem', textAlign: 'center' },
@@ -149,7 +148,7 @@ const LoginForm: React.FC = () => {
             {loading ? (
               <CircularProgress size={24} color='inherit' />
             ) : (
-              '다음으로'
+              '로그인'
             )}
           </Button>
         </Box>

@@ -11,13 +11,13 @@ import AttendanceDashboard from './components/attendance/AttendanceDashboard';
 import AttendanceInput from './components/attendance/AttendanceInput';
 import EmailVerificationPage from './components/auth/EmailVerificationPage';
 import LoginForm from './components/auth/LoginForm';
+import PasswordSetup from './components/auth/PasswordSetup';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserFindPage from './components/auth/UserFindPage';
 import MainLayout from './components/layouts/MainLayout';
 import ServiceSelection from './components/main/ServiceSelection';
 import WelcomePage from './components/main/WelcomePage';
 import MemberList from './components/members/MemberList';
-import MemberRegistration from './components/members/MemberRegistration';
 import PrayerTopic from './components/prayer/PrayerTopic';
 import { store } from './store';
 
@@ -54,6 +54,7 @@ function App() {
               path='/email-verification'
               element={<EmailVerificationPage />}
             />
+            <Route path='/password-setup' element={<PasswordSetup />} />
 
             {/* 보호된 라우트 */}
             <Route
@@ -75,10 +76,6 @@ function App() {
               />
               <Route path='attendance-input' element={<AttendanceInput />} />
               <Route path='member-list' element={<MemberList />} />
-              <Route
-                path='member-registration'
-                element={<MemberRegistration />}
-              />
               <Route path='prayer-topic' element={<PrayerTopic />} />
             </Route>
           </Routes>

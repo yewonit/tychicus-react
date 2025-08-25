@@ -1,41 +1,11 @@
-import { Box, Container, Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { Box, Typography } from '@mui/material';
+
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../store';
-import '../../styles/welcome.css';
+
 import { authTokenCheck } from '../../utils/authUtils';
-
-// 스타일드 컴포넌트
-const WelcomeContainer = styled(Container)(({ theme: _theme }) => ({
-  height: '100vh',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  textAlign: 'center',
-}));
-
-const WelcomeImage = styled('img')({
-  height: '220px',
-  margin: '0 auto',
-  objectFit: 'contain',
-  animation: 'fadeIn 1.5s ease-in-out forwards',
-});
-
-const WelcomeText = styled(Typography, {
-  shouldForwardProp: prop => prop !== '$fadeIn' && prop !== '$fadeOut',
-})<{ $fadeIn: boolean; $fadeOut: boolean }>(({ $fadeIn, $fadeOut }) => ({
-  fontSize: '1.5rem',
-  fontWeight: 'bold',
-  marginTop: '2rem',
-  animation: $fadeIn
-    ? 'fadeIn 1.5s ease-in-out forwards'
-    : $fadeOut
-      ? 'fadeOut 1s ease-in-out forwards'
-      : 'none',
-}));
 
 const WelcomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -88,9 +58,10 @@ const WelcomePage: React.FC = () => {
   }, [accessToken, refreshToken, navigate]);
 
   return (
-    <WelcomeContainer maxWidth={false}>
+    <div className='welcome-container'>
       <Box sx={{ mb: 4 }}>
-        <WelcomeImage
+        <img
+          className='welcome-image'
           src='/intro.png'
           alt='Welcome'
           onError={e => {
@@ -135,25 +106,25 @@ const WelcomePage: React.FC = () => {
         </Typography>
       </Box>
 
-      <WelcomeText
+      <Typography
+        className={`welcome-text ${!welcomeShown ? 'fadeIn' : 'fadeOut'}`}
         variant='h3'
-        $fadeIn={!welcomeShown}
-        $fadeOut={welcomeShown}
+        component='h1'
         sx={{ display: welcomeShown ? 'none' : 'block' }}
       >
         코람데오 청년선교회 출결 플랫폼에
         <br />잘 오셨습니다.
-      </WelcomeText>
+      </Typography>
 
-      <WelcomeText
+      <Typography
+        className={`welcome-text ${welcomeShown ? 'fadeIn' : 'fadeOut'}`}
         variant='h3'
-        $fadeIn={welcomeShown}
-        $fadeOut={!welcomeShown}
+        component='h1'
         sx={{ display: welcomeShown ? 'block' : 'none' }}
       >
         환영합니다.
-      </WelcomeText>
-    </WelcomeContainer>
+      </Typography>
+    </div>
   );
 };
 

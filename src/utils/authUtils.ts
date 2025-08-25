@@ -288,12 +288,21 @@ export const authResetPassword = async (userData: any) => {
   try {
     const result = await store.dispatch(resetPassword(userData));
     if (resetPassword.fulfilled.match(result)) {
-      return { result: true, message: '비밀번호가 설정되었습니다.' };
+      return {
+        success: true,
+        result: true,
+        message: '비밀번호가 설정되었습니다.',
+      };
     } else {
-      return { result: false, message: result.payload as string };
+      return {
+        success: false,
+        result: false,
+        message: result.payload as string,
+      };
     }
   } catch (error) {
     return {
+      success: false,
       result: false,
       message: '비밀번호 재설정 중 오류가 발생했습니다.',
     };
