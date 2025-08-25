@@ -14,7 +14,7 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({
-  title = '교회 출석 관리',
+  title = '서비스 선택',
   showBackButton = false,
   showHomeButton = false,
   showCancelButton = false,

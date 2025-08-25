@@ -1,11 +1,4 @@
-import { AccessTime, Dashboard, EventNote, Group } from '@mui/icons-material';
-import {
-  Box,
-  Card,
-  CardActionArea,
-  CardContent,
-  Typography,
-} from '@mui/material';
+import { EventNote, Group } from '@mui/icons-material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,44 +16,20 @@ const ServiceSelection: React.FC = () => {
 
   const services: ServiceCard[] = [
     {
-      id: 'attendance-dashboard',
-      title: '출석현황 대시보드',
-      description: '출석 통계 및 현황을 확인합니다',
-      icon: <Dashboard />,
-      path: '/attendance-dashboard',
+      id: 'member-management',
+      title: '재적인원관리',
+      description: '재적 인원을 관리합니다',
+      icon: <Group />,
+      path: '/main/member-management',
       color: '#4ecdc4',
     },
     {
-      id: 'attendance-input',
-      title: '출석 입력',
-      description: '출석 데이터를 입력합니다',
+      id: 'meeting-records',
+      title: '모임기록관리',
+      description: '모임 기록을 관리합니다',
       icon: <EventNote />,
-      path: '/attendance-input',
+      path: '/main/meeting-records',
       color: '#5dade2',
-    },
-    {
-      id: 'member-list',
-      title: '회원 명단',
-      description: '회원 목록을 확인합니다',
-      icon: <Group />,
-      path: '/member-list',
-      color: '#f39c12',
-    },
-    {
-      id: 'prayer-topic',
-      title: '기도제목',
-      description: '기도제목을 관리합니다',
-      icon: <AccessTime />,
-      path: '/prayer-topic',
-      color: '#e74c3c',
-    },
-    {
-      id: 'member-registration',
-      title: '회원 등록',
-      description: '새로운 회원을 등록합니다',
-      icon: <Group />,
-      path: '/member-registration',
-      color: '#9b59b6',
     },
   ];
 
@@ -69,75 +38,55 @@ const ServiceSelection: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography
-        variant='h4'
-        component='h1'
-        gutterBottom
-        sx={{ textAlign: 'center', mb: 4 }}
-      >
-        서비스 선택
-      </Typography>
+    <div className='service-selection-container'>
+      {/* 헤더 */}
+      <div className='service-header'>
+        <h1 className='service-title'>서비스 선택</h1>
+        <div className='service-subtitle'>ㅇㅇㅇ그룹</div>
+        <div className='service-subtitle'>정성민순</div>
+      </div>
 
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-            md: 'repeat(3, 1fr)',
-          },
-          gap: 3,
-        }}
-      >
+      {/* 서비스 카드들 */}
+      <div className='service-cards-container'>
         {services.map(service => (
-          <Card
-            key={service.id}
-            sx={{
-              height: '100%',
-              transition: 'transform 0.2s',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: 3,
-              },
-            }}
-          >
-            <CardActionArea
-              onClick={() => handleServiceClick(service.path)}
-              sx={{ height: '100%', p: 2 }}
-            >
-              <Box sx={{ textAlign: 'center', mb: 2 }}>
-                <Box
-                  sx={{
-                    backgroundColor: service.color,
-                    color: 'white',
-                    width: 64,
-                    height: 64,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto',
-                    transition: 'opacity 0.2s',
-                  }}
-                >
-                  {service.icon}
-                </Box>
-              </Box>
+          <div key={service.id} className='service-card'>
+            <div className='service-card-content'>
+              {/* 아이콘과 제목 */}
+              <div
+                className={`service-icon-container ${service.color === '#4ecdc4' ? 'primary' : 'secondary'}`}
+              >
+                {React.cloneElement(service.icon as React.ReactElement, {
+                  style: { fontSize: 32, color: 'white' },
+                })}
+              </div>
 
-              <CardContent sx={{ textAlign: 'center', pt: 0 }}>
-                <Typography variant='h6' component='h2' gutterBottom>
-                  {service.title}
-                </Typography>
-                <Typography variant='body2' color='text.secondary'>
-                  {service.description}
-                </Typography>
-              </CardContent>
-            </CardActionArea>
-          </Card>
+              <h2 className='service-card-title'>{service.title}</h2>
+
+              <div className='service-card-subtitle'>
+                {service.title === '재적인원관리'
+                  ? 'Management of members'
+                  : 'Meeting History Management'}
+              </div>
+
+              {/* 설명 */}
+              <div className='service-card-description'>
+                {service.title === '재적인원관리'
+                  ? '신규인원을 등록하고 인원들의 정보를 수정/관리해보세요'
+                  : '모임 히스토리를 확인하고 관리할 수 있습니다.'}
+              </div>
+
+              {/* 선택 버튼 */}
+              <button
+                onClick={() => handleServiceClick(service.path)}
+                className='service-select-button'
+              >
+                선택하기
+              </button>
+            </div>
+          </div>
         ))}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

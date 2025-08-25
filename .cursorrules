@@ -297,69 +297,196 @@ const authReducer = (state, action) => {
 
 ## 스타일 관리 가이드라인
 
+### ⚠️ 핵심 원칙: CSS 파일 기반 스타일 관리
+- **모든 스타일은 `src/styles/global.css`에서 중앙 집중 관리**
+- **CSS 클래스를 활용한 일관성 있는 디자인 시스템**
+- **styled-components 및 인라인 스타일 금지**
+
 ### CSS 파일 구조
 ```
 src/styles/
-├── global.css          # 전역 스타일 및 CSS 변수
-└── welcome.css         # 페이지별 특수 스타일
+└── global.css          # 모든 스타일을 한 곳에서 관리
+                        # - CSS 변수 정의
+                        # - 공통 컴포넌트 스타일
+                        # - 페이지별 스타일
+                        # - 반응형 미디어 쿼리
 ```
 
-### 공통 CSS 클래스 사용법
+### 스타일 관리 원칙
 
-#### 인증 페이지 레이아웃
+#### 1. CSS 클래스 우선 사용
 ```jsx
-// styled-components 사용하지 않음
-<div className="auth-container">
-  <div className="auth-paper">
-    <div className="header-box">
-      {/* 헤더 내용 */}
-    </div>
-    <div className="user-info-box">
-      {/* 사용자 정보 */}
-    </div>
-    <div className="input-group">
-      <TextField className="common-textfield" />
-    </div>
-    <div className="button-group full-width">
-      <Button className="common-button" />
-    </div>
-  </div>
+// ✅ 올바른 방법: CSS 클래스 사용
+<div className='service-selection-container'>
+  <h1 className='service-title'>제목</h1>
+  <button className='service-select-button'>버튼</button>
 </div>
+
+// ❌ 잘못된 방법: styled-components
+const StyledContainer = styled.div`
+  padding: 20px;
+`;
+
+// ❌ 잘못된 방법: Material-UI sx prop 남용
+<Box sx={{ padding: '20px', margin: '10px' }}>
 ```
 
-#### 주요 CSS 클래스들
-- `.auth-container`: 인증 페이지 전체 컨테이너
+#### 2. CSS 변수 적극 활용
+```css
+/* global.css에서 정의 */
+:root {
+  --primary: #4ecdc4;
+  --font-size-base: 16px;
+  --spacing-md: 16px;
+}
+
+/* 클래스에서 사용 */
+.service-title {
+  color: var(--primary);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-md);
+}
+```
+
+#### 3. 컴포넌트별 네이밍 규칙
+```css
+/* 페이지별 접두사 사용 */
+.service-selection-container {}
+.service-header {}
+.service-card {}
+
+.auth-container {}
+.auth-paper {}
+.auth-button {}
+
+.member-list-container {}
+.member-card {}
+.member-item {}
+```
+
+### 주요 CSS 클래스들
+
+#### 공통 컴포넌트
+- `.common-container`: 기본 컨테이너
+- `.common-card`: 공통 카드 스타일
+- `.common-button`: 공통 버튼 (그라데이션)
+- `.common-textfield`: 공통 입력 필드
+
+#### 인증 페이지
+- `.auth-container`: 인증 페이지 컨테이너
 - `.auth-paper`: 인증 페이지 메인 카드
-- `.header-box`: 헤더 영역 (뒤로가기 + 제목)
-- `.user-info-box`: 사용자 정보 표시 박스
-- `.common-textfield`: 공통 텍스트 필드 스타일
-- `.common-button`: 공통 버튼 스타일 (그라데이션)
-- `.common-card`: 일반 카드 컴포넌트
-- `.input-group`: 입력 필드 그룹
-- `.button-group`: 버튼 그룹 (`.centered`, `.full-width` 수정자)
-- `.welcome-container`: 웰컴 페이지 컨테이너
-- `.welcome-image`: 웰컴 페이지 이미지
-- `.welcome-text`: 웰컴 페이지 텍스트
+- `.header-box`: 헤더 영역
+- `.user-info-box`: 사용자 정보 박스
 
-### CSS 변수 활용
-Material-UI sx prop에서도 CSS 변수 사용:
+#### 서비스 선택 페이지
+- `.service-selection-container`: 메인 컨테이너
+- `.service-header`: 헤더 영역
+- `.service-title`: 메인 제목
+- `.service-subtitle`: 부제목 (그라데이션 텍스트)
+- `.service-cards-container`: 카드 컨테이너
+- `.service-card`: 개별 서비스 카드
+- `.service-icon-container`: 아이콘 영역
+- `.service-select-button`: 선택 버튼
+
+#### 레이아웃 유틸리티
+- `.input-group`: 입력 필드 그룹
+- `.button-group`: 버튼 그룹
+- `.full-width`: 전체 너비
+- `.centered`: 중앙 정렬
+
+### Material-UI 사용 가이드라인
+
+#### 허용되는 경우
 ```jsx
+// ✅ 기본 컴포넌트로만 사용, 스타일은 CSS 클래스
+<Button className='common-button'>버튼</Button>
+<TextField className='common-textfield' />
+
+// ✅ CSS 변수만 활용하는 최소한의 sx prop
 <IconButton sx={{ color: 'var(--primary)' }} />
-<Button sx={{ 
-  background: 'var(--gradient-primary)',
-  '&:hover': { background: 'var(--gradient-secondary)' }
-}} />
 ```
 
-### 스타일 우선순위
-1. **CSS 클래스** (global.css)
-2. **Material-UI sx prop** (필요시에만)
-3. **인라인 스타일** (절대 피할 것)
+#### 금지되는 경우
+```jsx
+// ❌ 복잡한 스타일을 sx prop으로 정의
+<Box sx={{
+  padding: '20px',
+  margin: '10px',
+  backgroundColor: '#f0f0f0',
+  borderRadius: '8px',
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+}}>
 
-### ⚠️ 중요: styled-components 사용 금지
-- 모든 스타일은 `src/styles/global.css`에서 관리
-- 새로운 styled-components 생성 금지
-- 기존 styled-components는 CSS 클래스로 리팩토링
+// ❌ 인라인 스타일
+<div style={{ padding: '20px', color: 'blue' }}>
+```
+
+### 반응형 디자인
+```css
+/* 모바일 우선 접근법 */
+.service-title {
+  font-size: var(--font-size-base);
+}
+
+/* 태블릿 */
+@media (min-width: 768px) {
+  .service-title {
+    font-size: var(--font-size-lg);
+  }
+}
+
+/* 데스크톱 */
+@media (min-width: 1024px) {
+  .service-title {
+    font-size: var(--font-size-xl);
+  }
+}
+```
+
+### 새 컴포넌트 스타일링 절차
+
+1. **global.css에 스타일 정의**
+```css
+.new-component-container {
+  background: var(--bg-elevated);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+}
+```
+
+2. **컴포넌트에서 클래스 사용**
+```jsx
+const NewComponent = () => {
+  return (
+    <div className='new-component-container'>
+      <h2 className='new-component-title'>제목</h2>
+    </div>
+  );
+};
+```
+
+3. **Material-UI 최소화**
+```jsx
+// Material-UI는 기능만, 스타일은 CSS로
+<TextField 
+  className='common-textfield'
+  variant='outlined'
+  // sx prop 사용 금지
+/>
+```
+
+### ⚠️ 절대 금지 사항
+1. **styled-components 사용**
+2. **새로운 인라인 스타일 추가**
+3. **Material-UI sx prop으로 복잡한 스타일 정의**
+4. **CSS-in-JS 라이브러리 추가**
+
+### ✅ 권장 사항
+1. **모든 스타일을 global.css에 집중**
+2. **CSS 변수 적극 활용**
+3. **의미 있는 클래스명 사용**
+4. **반응형 디자인 고려**
+5. **일관성 있는 네이밍 규칙 준수**
 
 ## 클린 코드 가이드라인
 

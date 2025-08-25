@@ -7,18 +7,16 @@ import {
   BrowserRouter as Router,
   Routes,
 } from 'react-router-dom';
-import AttendanceDashboard from './components/attendance/AttendanceDashboard';
-import AttendanceInput from './components/attendance/AttendanceInput';
 import EmailVerificationPage from './components/auth/EmailVerificationPage';
 import LoginForm from './components/auth/LoginForm';
 import PasswordSetup from './components/auth/PasswordSetup';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserFindPage from './components/auth/UserFindPage';
 import MainLayout from './components/layouts/MainLayout';
+import MeetingRecords from './components/main/MeetingRecords';
 import ServiceSelection from './components/main/ServiceSelection';
 import WelcomePage from './components/main/WelcomePage';
 import MemberList from './components/members/MemberList';
-import PrayerTopic from './components/prayer/PrayerTopic';
 import { store } from './store';
 
 // Material-UI 테마 설정
@@ -70,13 +68,8 @@ function App() {
                 element={<Navigate to='service-selection' replace />}
               />
               <Route path='service-selection' element={<ServiceSelection />} />
-              <Route
-                path='attendance-dashboard'
-                element={<AttendanceDashboard />}
-              />
-              <Route path='attendance-input' element={<AttendanceInput />} />
-              <Route path='member-list' element={<MemberList />} />
-              <Route path='prayer-topic' element={<PrayerTopic />} />
+              <Route path='member-management' element={<MemberList />} />
+              <Route path='meeting-records' element={<MeetingRecords />} />
             </Route>
           </Routes>
         </Router>
