@@ -1,65 +1,56 @@
 import {
   Add as AddIcon,
-  CalendarToday as CalendarIcon,
-  Delete as DeleteIcon,
-  Description as DescriptionIcon,
-  Edit as EditIcon,
-  Group as GroupIcon,
+  ArrowBack,
+  Close,
+  Delete,
+  Edit,
+  RemoveRedEye,
 } from '@mui/icons-material';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Fab,
-  Grid,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
   MenuItem,
   TextField,
-  Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface MeetingRecord {
   id: string;
   title: string;
   date: string;
-  type: '주일예배' | '수요예배' | '새벽기도' | '구역모임' | '기타';
-  attendees: number;
-  description: string;
-  location: string;
-  leader: string;
+  week: string; // 예: "8월 3주차"
+  type: '청년예배' | '주일3부예배' | '수요예배' | '새벽기도' | '구역모임';
+  recordDate: string; // 모임 기록일시
+  imageUrl?: string;
 }
 
 const MeetingRecords: React.FC = () => {
+  const navigate = useNavigate();
+
   const [meetings, setMeetings] = useState<MeetingRecord[]>([
     {
       id: '1',
-      title: '주일 오전 예배',
-      date: '2024-01-14',
-      type: '주일예배',
-      attendees: 45,
-      description: '신년 감사예배',
-      location: '본당',
-      leader: '김목사',
+      title: '청년예배',
+      date: '2025년 8월 17일 일요일',
+      week: '8월 3주차',
+      type: '청년예배',
+      recordDate: '2025년 8월 18일 오전 07:28',
+      imageUrl: undefined,
     },
     {
       id: '2',
-      title: '청년부 모임',
-      date: '2024-01-10',
-      type: '구역모임',
-      attendees: 12,
-      description: '신년 계획 나눔',
-      location: '청년부실',
-      leader: '이전도사',
+      title: '주일3부예배',
+      date: '2025년 8월 17일 일요일',
+      week: '8월 3주차',
+      type: '주일3부예배',
+      recordDate: '2025년 8월 18일 오전 07:28',
+      imageUrl: undefined,
     },
   ]);
 
@@ -70,20 +61,26 @@ const MeetingRecords: React.FC = () => {
   const [formData, setFormData] = useState<Partial<MeetingRecord>>({
     title: '',
     date: '',
-    type: '주일예배',
-    attendees: 0,
-    description: '',
-    location: '',
-    leader: '',
+    week: '',
+    type: '청년예배',
+    recordDate: '',
   });
 
   const meetingTypes = [
-    '주일예배',
+    '청년예배',
+    '주일3부예배',
     '수요예배',
     '새벽기도',
     '구역모임',
-    '기타',
   ] as const;
+
+  const handleBack = () => {
+    navigate('/main/service-selection');
+  };
+
+  const handleClose = () => {
+    navigate('/main/service-selection');
+  };
 
   const handleOpenDialog = (meeting?: MeetingRecord) => {
     if (meeting) {
@@ -94,11 +91,9 @@ const MeetingRecords: React.FC = () => {
       setFormData({
         title: '',
         date: '',
-        type: '주일예배',
-        attendees: 0,
-        description: '',
-        location: '',
-        leader: '',
+        week: '',
+        type: '청년예배',
+        recordDate: '',
       });
     }
     setIsDialogOpen(true);
@@ -126,11 +121,9 @@ const MeetingRecords: React.FC = () => {
         id: Date.now().toString(),
         title: formData.title || '',
         date: formData.date || '',
-        type: formData.type || '주일예배',
-        attendees: formData.attendees || 0,
-        description: formData.description || '',
-        location: formData.location || '',
-        leader: formData.leader || '',
+        week: formData.week || '',
+        type: formData.type || '청년예배',
+        recordDate: formData.recordDate || new Date().toLocaleString('ko-KR'),
       };
       setMeetings(prev => [...prev, newMeeting]);
     }
@@ -143,10 +136,24 @@ const MeetingRecords: React.FC = () => {
     }
   };
 
+  const handleEdit = (id: string) => {
+    const meeting = meetings.find(m => m.id === id);
+    if (meeting) {
+      handleOpenDialog(meeting);
+    }
+  };
+
+  const handleDetail = (id: string) => {
+    // TODO: 상세보기 기능 구현
+    alert(`모임 ${id} 상세보기 기능을 구현 예정입니다.`);
+  };
+
   const getTypeColor = (type: string) => {
     switch (type) {
-      case '주일예배':
-        return '#4ecdc4';
+      case '청년예배':
+        return '#ffa726'; // 주황색
+      case '주일3부예배':
+        return '#ffa726'; // 주황색
       case '수요예배':
         return '#5dade2';
       case '새벽기도':
@@ -158,136 +165,96 @@ const MeetingRecords: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'short',
-    });
-  };
-
   return (
-    <div className='common-container'>
-      <div className='header-box'>
-        <Typography variant='h4' component='h1' className='page-title'>
-          모임기록관리
-        </Typography>
-        <Typography variant='body1' color='textSecondary'>
-          교회 모임 기록을 관리합니다
-        </Typography>
+    <div className='meeting-records-container'>
+      {/* 헤더 */}
+      <div className='meeting-header'>
+        <div className='meeting-header-left'>
+          <button className='meeting-back-button' onClick={handleBack}>
+            <ArrowBack style={{ fontSize: 24 }} />
+          </button>
+          <h1 className='meeting-title'>모임 기록</h1>
+        </div>
+        <button className='meeting-close-button' onClick={handleClose}>
+          <Close style={{ fontSize: 24 }} />
+        </button>
       </div>
 
-      <Grid container spacing={3}>
+      {/* 모임 카드들 */}
+      <div className='meeting-cards-container'>
         {meetings.map(meeting => (
-          <Grid item xs={12} md={6} lg={4} key={meeting.id}>
-            <Card className='common-card' sx={{ height: '100%' }}>
-              <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    mb: 2,
-                  }}
+          <div key={meeting.id} className='meeting-card'>
+            {/* 이미지 업로드 영역 */}
+            <div className='meeting-image-area'>
+              <div className='coram-deo-logo'>CoramDeo</div>
+              <div className='image-upload-text'>⬆ 이미지를 업로드하세요</div>
+              <div className='upload-text-en'>Upload Image</div>
+            </div>
+
+            {/* 모임 정보 */}
+            <div className='meeting-info'>
+              {/* 주차 태그 */}
+              <div
+                className='meeting-week-tag'
+                style={{ backgroundColor: getTypeColor(meeting.type) }}
+              >
+                {meeting.week} {meeting.type}
+              </div>
+
+              {/* 날짜 정보 */}
+              <div className='meeting-date-info'>
+                <div className='calendar-icon'>📅</div>
+                <div className='meeting-date'>{meeting.date}</div>
+              </div>
+
+              {/* 기록일시 */}
+              <div className='meeting-record-info'>
+                <div className='clock-icon'>🕐</div>
+                <div className='meeting-record-text'>
+                  모임 기록일시: {meeting.recordDate}
+                </div>
+              </div>
+
+              {/* 액션 버튼들 */}
+              <div className='meeting-actions'>
+                <button
+                  className='meeting-action-button edit'
+                  onClick={() => handleEdit(meeting.id)}
+                  title='수정'
                 >
-                  <Typography
-                    variant='h6'
-                    component='h3'
-                    sx={{ fontWeight: 'bold' }}
-                  >
-                    {meeting.title}
-                  </Typography>
-                  <Chip
-                    label={meeting.type}
-                    size='small'
-                    sx={{
-                      backgroundColor: getTypeColor(meeting.type),
-                      color: 'white',
-                      fontWeight: 'medium',
-                    }}
-                  />
-                </Box>
-
-                <List dense sx={{ py: 0 }}>
-                  <ListItem sx={{ px: 0 }}>
-                    <CalendarIcon sx={{ mr: 2, color: 'var(--primary)' }} />
-                    <ListItemText
-                      primary='날짜'
-                      secondary={formatDate(meeting.date)}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ px: 0 }}>
-                    <GroupIcon sx={{ mr: 2, color: 'var(--primary)' }} />
-                    <ListItemText
-                      primary='참석자'
-                      secondary={`${meeting.attendees}명`}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ px: 0 }}>
-                    <DescriptionIcon sx={{ mr: 2, color: 'var(--primary)' }} />
-                    <ListItemText primary='장소' secondary={meeting.location} />
-                  </ListItem>
-                  <ListItem sx={{ px: 0 }}>
-                    <ListItemText primary='담당자' secondary={meeting.leader} />
-                  </ListItem>
-                </List>
-
-                {meeting.description && (
-                  <Box
-                    sx={{
-                      mt: 2,
-                      p: 2,
-                      backgroundColor: 'var(--bg-card)',
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Typography variant='body2' color='textSecondary'>
-                      {meeting.description}
-                    </Typography>
-                  </Box>
-                )}
-
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    mt: 2,
-                    gap: 1,
-                  }}
+                  <Edit style={{ fontSize: 20 }} />
+                </button>
+                <button
+                  className='meeting-action-button delete'
+                  onClick={() => handleDelete(meeting.id)}
+                  title='삭제'
                 >
-                  <IconButton
-                    size='small'
-                    onClick={() => handleOpenDialog(meeting)}
-                    sx={{ color: 'var(--primary)' }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    size='small'
-                    onClick={() => handleDelete(meeting.id)}
-                    sx={{ color: 'var(--error)' }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+                  <Delete style={{ fontSize: 20 }} />
+                </button>
+                <button
+                  className='meeting-action-button detail'
+                  onClick={() => handleDetail(meeting.id)}
+                  title='상세보기'
+                >
+                  <RemoveRedEye style={{ fontSize: 20 }} />
+                  <span className='detail-text'>상세보기</span>
+                </button>
+              </div>
+            </div>
+          </div>
         ))}
-      </Grid>
+      </div>
 
-      {/* 모임 추가 버튼 */}
+      {/* 플로팅 추가 버튼 */}
       <Fab
-        color='primary'
-        aria-label='add'
-        onClick={() => handleOpenDialog()}
-        sx={{
+        className='meeting-add-button'
+        onClick={() => navigate('/main/meeting-add')}
+        style={{
           position: 'fixed',
           bottom: 24,
           right: 24,
-          background: 'var(--gradient-primary)',
+          backgroundColor: 'var(--primary)',
+          color: 'white',
         }}
       >
         <AddIcon />
@@ -317,20 +284,30 @@ const MeetingRecords: React.FC = () => {
 
             <TextField
               label='날짜'
-              type='date'
               value={formData.date || ''}
               onChange={e =>
                 setFormData(prev => ({ ...prev, date: e.target.value }))
               }
               fullWidth
               required
-              InputLabelProps={{ shrink: true }}
+              placeholder='예: 2025년 8월 17일 일요일'
+            />
+
+            <TextField
+              label='주차'
+              value={formData.week || ''}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, week: e.target.value }))
+              }
+              fullWidth
+              required
+              placeholder='예: 8월 3주차'
             />
 
             <TextField
               label='모임 유형'
               select
-              value={formData.type || '주일예배'}
+              value={formData.type || '청년예배'}
               onChange={e =>
                 setFormData(prev => ({ ...prev, type: e.target.value as any }))
               }
@@ -345,50 +322,14 @@ const MeetingRecords: React.FC = () => {
             </TextField>
 
             <TextField
-              label='참석자 수'
-              type='number'
-              value={formData.attendees || 0}
+              label='모임 기록일시'
+              value={formData.recordDate || ''}
               onChange={e =>
-                setFormData(prev => ({
-                  ...prev,
-                  attendees: parseInt(e.target.value) || 0,
-                }))
+                setFormData(prev => ({ ...prev, recordDate: e.target.value }))
               }
               fullWidth
               required
-              inputProps={{ min: 0 }}
-            />
-
-            <TextField
-              label='장소'
-              value={formData.location || ''}
-              onChange={e =>
-                setFormData(prev => ({ ...prev, location: e.target.value }))
-              }
-              fullWidth
-              required
-            />
-
-            <TextField
-              label='담당자'
-              value={formData.leader || ''}
-              onChange={e =>
-                setFormData(prev => ({ ...prev, leader: e.target.value }))
-              }
-              fullWidth
-              required
-            />
-
-            <TextField
-              label='모임 내용'
-              value={formData.description || ''}
-              onChange={e =>
-                setFormData(prev => ({ ...prev, description: e.target.value }))
-              }
-              fullWidth
-              multiline
-              rows={3}
-              placeholder='모임의 주요 내용을 입력해주세요'
+              placeholder='예: 2025년 8월 18일 오전 07:28'
             />
           </Box>
         </DialogContent>
@@ -401,8 +342,8 @@ const MeetingRecords: React.FC = () => {
             disabled={
               !formData.title ||
               !formData.date ||
-              !formData.location ||
-              !formData.leader
+              !formData.week ||
+              !formData.recordDate
             }
           >
             {editingMeeting ? '수정' : '추가'}

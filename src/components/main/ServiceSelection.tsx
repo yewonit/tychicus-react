@@ -41,9 +41,7 @@ const ServiceSelection: React.FC = () => {
     <div className='service-selection-container'>
       {/* 헤더 */}
       <div className='service-header'>
-        <h1 className='service-title'>서비스 선택</h1>
-        <div className='service-subtitle'>ㅇㅇㅇ그룹</div>
-        <div className='service-subtitle'>정성민순</div>
+        <h1 className='service-title'>ㅇㅇㅇ그룹 정성민순</h1>
       </div>
 
       {/* 서비스 카드들 */}
