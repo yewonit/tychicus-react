@@ -24,14 +24,30 @@ export interface Organization {
 }
 
 export interface Member {
-  id: string;
+  userId: number;
   name: string;
-  email?: string;
-  phone?: string;
-  organizationId: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  nameSuffix: string;
+  email: string | null;
+  genderType: 'M' | 'F';
+  birthDate: string;
+  address: string | null;
+  addressDetail: string | null;
+  city: string | null;
+  stateProvince: string | null;
+  country: string | null;
+  zipPostalCode: string | null;
+  isAddressPublic: 'Y' | 'N';
+  snsUrl: string | null;
+  hobby: string | null;
+  phoneNumber: string;
+  isPhoneNumberPublic: 'Y' | 'N';
+  churchMemberNumber: string | null;
+  churchRegistrationDate: string | null;
+  isNewMember: 'Y' | 'N';
+  isLongTermAbsentee: 'Y' | 'N';
+  isKakaotalkChatMember: 'Y' | 'N';
+  roleId: number;
+  roleName: string;
 }
 
 // 출석 관련 타입
@@ -47,13 +63,16 @@ export interface Attendance {
 }
 
 export interface Activity {
-  id: string;
+  id: number;
   name: string;
-  organizationId: string;
-  type: 'worship' | 'meeting' | 'prayer';
-  date: string;
-  startTime?: string;
-  endTime?: string;
+  category: string;
+  organizationId: number;
+  dayOfWeek: number; // 0: 일요일, 1: 월요일, ..., 6: 토요일
+  startTime: string;
+  endTime: string;
+  location?: string;
+  description?: string;
+  isActive: boolean;
 }
 
 export interface ActivityInstance {
@@ -114,4 +133,43 @@ export interface SnackbarState {
   text: string;
   color: 'success' | 'warning' | 'error' | 'info';
   timeout: number;
+}
+
+// 모임 관련 타입
+export interface Meeting {
+  id: number;
+  activityId: number;
+  meetingDate: string;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  notes: string;
+  imageUrl?: string;
+  participants: MeetingParticipant[];
+  organizationId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MeetingParticipant {
+  memberId: number;
+  isPresent: boolean;
+  roleId: number;
+  roleName: string;
+}
+
+// 모임 등록 폼 타입
+export interface MeetingFormData {
+  selectedActivity: number | null;
+  meetingDate: string;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  notes: string;
+  imageFile: File | null;
+  selectedParticipants: number[];
 }

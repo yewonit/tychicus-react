@@ -1716,3 +1716,359 @@ body {
     font-size: var(--font-size-sm);
   }
 }
+
+/* 참여자 선택 다이얼로그 스타일 */
+.participants-dialog {
+  border-radius: 16px;
+}
+
+.participants-dialog .MuiDialog-paper {
+  border-radius: 16px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.participants-dialog-title {
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.participants-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.participant-item {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.participant-item:last-child {
+  border-bottom: none;
+}
+
+.participant-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.participant-name {
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+}
+
+.participant-label {
+  font-size: var(--font-size-xs);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: var(--font-weight-medium);
+  color: white;
+  display: inline-block;
+  min-width: fit-content;
+}
+
+.participant-label.new-family {
+  background-color: #ff9800;
+}
+
+.participant-label.leader {
+  background-color: #9c27b0;
+}
+
+.participant-label.ebs {
+  background-color: #ffc107;
+}
+
+.participant-label.member {
+  background-color: #4caf50;
+}
+
+.participant-toggle {
+  margin-left: var(--spacing-md);
+}
+
+.participants-dialog-actions {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: center;
+}
+
+.participants-dialog-actions .MuiButton-root {
+  min-width: 120px;
+  height: 40px;
+  border-radius: 20px;
+  font-weight: var(--font-weight-medium);
+}
+
+/* 모임 상세 정보 화면 스타일 */
+.meeting-detail-container {
+  padding: var(--spacing-md);
+  padding-bottom: 80px;
+  background-color: var(--bg-secondary);
+  min-height: 100vh;
+}
+
+.meeting-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) 0;
+  margin-bottom: var(--spacing-md);
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-secondary);
+  z-index: 10;
+}
+
+.back-button {
+  color: var(--text-primary);
+  background-color: var(--bg-elevated);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-title {
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+}
+
+.info-button {
+  color: var(--primary);
+  background-color: var(--bg-elevated);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.meeting-image-card {
+  margin-bottom: var(--spacing-lg);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.meeting-image-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.meeting-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-color: var(--bg-card);
+}
+
+.image-loading-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background-color: var(--bg-card);
+  gap: var(--spacing-md);
+}
+
+.image-loading-text {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.info-card {
+  margin-bottom: var(--spacing-lg);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-elevated);
+  overflow: hidden;
+}
+
+.card-header {
+  background-color: var(--bg-card);
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.attendance-summary {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin: 0;
+  text-align: right;
+}
+
+.card-divider {
+  margin: 0;
+  border-color: var(--border-light);
+}
+
+.card-content {
+  padding: var(--spacing-lg);
+}
+
+.info-item {
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.info-label {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.info-value {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.5;
+}
+
+.attendance-section {
+  border-bottom: 1px solid var(--border-light);
+}
+
+.attendance-section:last-child {
+  border-bottom: none;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.section-header:hover {
+  background-color: var(--bg-secondary);
+}
+
+.section-title {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.member-list {
+  padding: 0;
+  background-color: transparent;
+}
+
+.member-item {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-light);
+  transition: background-color 0.3s ease;
+}
+
+.member-item:last-child {
+  border-bottom: none;
+}
+
+.member-item:hover {
+  background-color: var(--bg-secondary);
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  font-weight: var(--font-weight-bold);
+  color: white;
+}
+
+.member-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.role-leader {
+  color: var(--primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.role-ebs {
+  color: var(--secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.role-member {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.role-default {
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-normal);
+}
+
+.status-chip {
+  font-weight: var(--font-weight-medium);
+  border-radius: 12px;
+}
+
+.status-chip.attended {
+  background-color: var(--success);
+  color: white;
+}
+
+.status-chip.absent {
+  background-color: var(--text-tertiary);
+  color: white;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  gap: var(--spacing-lg);
+}
+
+.loading-text {
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+}
+
+/* 모임 상세 정보 반응형 디자인 */
+@media (max-width: 768px) {
+  .meeting-detail-container {
+    padding: var(--spacing-sm);
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .attendance-summary {
+    text-align: left;
+    font-size: var(--font-size-xs);
+  }
+
+  .meeting-image-container {
+    height: 150px;
+  }
+
+  .header-title {
+    font-size: var(--font-size-base);
+  }
+}

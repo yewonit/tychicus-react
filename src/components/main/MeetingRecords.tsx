@@ -28,6 +28,9 @@ interface MeetingRecord {
   type: '청년예배' | '주일3부예배' | '수요예배' | '새벽기도' | '구역모임';
   recordDate: string; // 모임 기록일시
   imageUrl?: string;
+  organizationId?: string;
+  activityId?: string;
+  activityInstanceId?: string;
 }
 
 const MeetingRecords: React.FC = () => {
@@ -42,6 +45,9 @@ const MeetingRecords: React.FC = () => {
       type: '청년예배',
       recordDate: '2025년 8월 18일 오전 07:28',
       imageUrl: undefined,
+      organizationId: '106',
+      activityId: '1',
+      activityInstanceId: '1',
     },
     {
       id: '2',
@@ -51,6 +57,9 @@ const MeetingRecords: React.FC = () => {
       type: '주일3부예배',
       recordDate: '2025년 8월 18일 오전 07:28',
       imageUrl: undefined,
+      organizationId: '106',
+      activityId: '2',
+      activityInstanceId: '2',
     },
   ]);
 
@@ -97,6 +106,18 @@ const MeetingRecords: React.FC = () => {
       });
     }
     setIsDialogOpen(true);
+  };
+
+  const handleViewDetail = (meeting: MeetingRecord) => {
+    if (
+      meeting.organizationId &&
+      meeting.activityId &&
+      meeting.activityInstanceId
+    ) {
+      navigate(
+        `/main/meeting-detail/${meeting.organizationId}/${meeting.activityId}/${meeting.activityInstanceId}`
+      );
+    }
   };
 
   const handleCloseDialog = () => {
@@ -233,7 +254,7 @@ const MeetingRecords: React.FC = () => {
                 </button>
                 <button
                   className='meeting-action-button detail'
-                  onClick={() => handleDetail(meeting.id)}
+                  onClick={() => handleViewDetail(meeting)}
                   title='상세보기'
                 >
                   <RemoveRedEye style={{ fontSize: 20 }} />

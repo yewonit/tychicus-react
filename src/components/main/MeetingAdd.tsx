@@ -10,7 +10,6 @@ import {
   Button,
   Card,
   CardMedia,
-  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -19,9 +18,6 @@ import {
   FormControl,
   InputLabel,
   LinearProgress,
-  List,
-  ListItem,
-  ListItemText,
   MenuItem,
   Select,
   Step,
@@ -128,7 +124,7 @@ const MeetingAdd: React.FC = () => {
     selectedDate: '',
   });
 
-  // 활동별 기본값 정의
+  // 활동별 기본값 정의 (Vue 소스와 동일하게 업데이트)
   const activityDefaults: { [key: string]: ActivityDefaults } = {
     주일2부예배: {
       startTime: '10:00',
@@ -181,6 +177,15 @@ const MeetingAdd: React.FC = () => {
     },
   };
 
+  // Vue 소스와 동일한 역할 정보
+  const roleInfo: { [key: string]: { color: string; priority: number } } = {
+    그룹장: { color: '#B3C6FF', priority: 1 }, // 파스텔 블루
+    순장: { color: '#D6E0FF', priority: 1 }, // 연한 파스텔 블루
+    EBS: { color: '#FFF4B3', priority: 2 }, // 파스텔 옐로우
+    순원: { color: '#C2E0C2', priority: 3 }, // 파스텔 그린
+    회원: { color: '#D6EAD6', priority: 3 }, // 연한 파스텔 그린
+  };
+
   const dayOfWeekTexts = [
     '일요일',
     '월요일',
@@ -193,7 +198,7 @@ const MeetingAdd: React.FC = () => {
 
   const organizationId = 106; // 임시로 고정값 사용
 
-  // 활동 목록 조회
+  // 활동 목록 조회 (Vue 소스와 동일하게 업데이트)
   const fetchActivities = useCallback(async () => {
     try {
       console.log('📢 활동 목록 조회 시작');
@@ -220,14 +225,31 @@ const MeetingAdd: React.FC = () => {
           description: '두란노사역자모임',
         },
       ];
-      setActivities(mockActivities);
-      console.log('✅ 활동 목록 조회 완료:', mockActivities);
+
+      // Vue 소스와 동일하게 금요예배, 수요예배, 주일2부예배 제외
+      const excludedActivities = ['금요예배', '수요예배', '주일2부예배'];
+      const filteredActivities = mockActivities.filter(
+        activity => !excludedActivities.includes(activity.name)
+      );
+
+      // 화면 표시용 이름 매핑
+      const displayNameMapping: { [key: string]: string } = {
+        현장치유팀사역: '두란노사역자모임',
+      };
+
+      const formattedActivities = filteredActivities.map(activity => ({
+        ...activity,
+        name: displayNameMapping[activity.name] || activity.name,
+      }));
+
+      setActivities(formattedActivities);
+      console.log('✅ 활동 목록 조회 완료:', formattedActivities);
     } catch (error) {
       console.error('❌ 활동 목록 조회 중 오류 발생:', error);
     }
   }, []);
 
-  // 회원 목록 조회
+  // 회원 목록 조회 (Vue 소스와 동일하게 업데이트)
   const fetchMembers = useCallback(async () => {
     try {
       console.log('📢 회원 목록 조회 시작');
@@ -238,15 +260,10 @@ const MeetingAdd: React.FC = () => {
 
       const memberList = response.data || [];
 
-      // 우선순위에 따라 정렬
+      // Vue 소스와 동일한 우선순위 정렬
       memberList.sort((a: Member, b: Member) => {
         const getRolePriority = (member: Member) => {
-          const roleOrder: { [key: number]: number } = {
-            222: 1, // 순장
-            223: 2, // EBS
-            224: 3, // 순원
-          };
-          return roleOrder[member.roleId] || 4;
+          return roleInfo[member.roleName]?.priority || 4;
         };
 
         if (a.isNewMember === 'Y' && b.isNewMember !== 'Y') return -1;
@@ -421,7 +438,7 @@ const MeetingAdd: React.FC = () => {
     []
   );
 
-  // 활동 선택 처리
+  // 활동 선택 처리 (Vue 소스와 동일하게 업데이트)
   const handleActivityChange = useCallback(
     (activityId: number | null) => {
       setSelectedActivity(activityId);
@@ -483,7 +500,37 @@ const MeetingAdd: React.FC = () => {
     []
   );
 
-  // 날짜 변경 처리
+  // Vue 소스와 동일한 모임 이름 설정 함수
+  const setMeetingName = () => {
+    if (!selectedActivity) return;
+
+    const activity = activities.find(a => a.id === selectedActivity);
+    if (activity && activityDefaults[activity.name]) {
+      const defaults = activityDefaults[activity.name];
+      setStartTime(defaults.startTime);
+      setEndTime(defaults.endTime);
+      setLocation(defaults.location);
+      setNotes(defaults.notes);
+
+      // 요일 정보가 있으면 해당 요일의 가장 최근 과거 날짜로 설정
+      if (defaults.dayOfWeek !== undefined) {
+        const recommendedDate = getNearestPastDate(defaults.dayOfWeek);
+        setMeetingDate(recommendedDate);
+        setStartDate(recommendedDate);
+
+        // 자정을 넘기는 모임인지 확인
+        if (isOvernightMeeting(defaults.startTime, defaults.endTime)) {
+          setEndDate(
+            format(addDays(new Date(recommendedDate), 1), 'yyyy-MM-dd')
+          );
+        } else {
+          setEndDate(recommendedDate);
+        }
+      }
+    }
+  };
+
+  // 날짜 변경 처리 (Vue 소스와 동일하게 업데이트)
   const handleDateChange = useCallback(
     (newDate: string) => {
       setMeetingDate(newDate);
@@ -531,6 +578,87 @@ const MeetingAdd: React.FC = () => {
     [selectedActivity, activities, startTime, endTime, getNearestPastDate]
   );
 
+  // Vue 소스와 동일한 날짜 검증 함수
+  const validateSelectedDate = useCallback((): boolean => {
+    if (!selectedActivity) return true;
+
+    const activity = activities.find(a => a.id === selectedActivity);
+    if (!activity || !activityDefaults[activity.name]) return true;
+
+    const defaults = activityDefaults[activity.name];
+    if (defaults.dayOfWeek === undefined) return true;
+
+    const selectedDate = new Date(meetingDate);
+    const dayOfWeek = getDay(selectedDate);
+
+    if (dayOfWeek !== defaults.dayOfWeek) {
+      // 불일치 - 경고 대화상자 정보 설정
+      const displayNameMapping: { [key: string]: string } = {
+        현장치유팀사역: '두란노사역자모임',
+      };
+
+      setWarningInfo({
+        selectedActivityName:
+          displayNameMapping[activity.name] || activity.name,
+        recommendedDayOfWeekText: dayOfWeekTexts[defaults.dayOfWeek],
+        selectedDayOfWeekText: dayOfWeekTexts[dayOfWeek],
+        selectedDate: meetingDate,
+        recommendedDate: getNearestPastDate(defaults.dayOfWeek),
+      });
+
+      setDayOfWeekWarningOpen(true);
+      return false;
+    }
+
+    return true;
+  }, [selectedActivity, activities, meetingDate, getNearestPastDate]);
+
+  // Vue 소스와 동일한 시간 유효성 검사 함수
+  const validateTimes = () => {
+    // 필요한 입력값이 모두 있는지 확인
+    if (!startDate || !endDate) {
+      return;
+    }
+
+    // 시간이 입력되지 않은 경우 기본값 설정
+    if (!startTime) setStartTime('00:00');
+    if (!endTime) setEndTime('00:00');
+
+    // 자정 넘김 처리
+    if (startTime && endTime && isOvernightMeeting(startTime, endTime)) {
+      setEndDate(format(addDays(new Date(startDate), 1), 'yyyy-MM-dd'));
+    }
+  };
+
+  // Vue 소스와 동일한 권장 요일 관련 함수들
+  const getRecommendedDayOfWeek = (): number | null => {
+    if (!selectedActivity) return null;
+
+    const activity = activities.find(a => a.id === selectedActivity);
+    if (!activity || !activityDefaults[activity.name]) return null;
+
+    return activityDefaults[activity.name].dayOfWeek;
+  };
+
+  const getRecommendedDayOfWeekText = (): string => {
+    const dayOfWeek = getRecommendedDayOfWeek();
+    return dayOfWeek !== null ? dayOfWeekTexts[dayOfWeek] : '';
+  };
+
+  const getActivityName = (): string => {
+    if (!selectedActivity) return '';
+
+    const activity = activities.find(a => a.id === selectedActivity);
+    if (!activity) return '';
+
+    // 화면 표시용 이름 매핑
+    const displayNameMapping: { [key: string]: string } = {
+      현장치유팀사역: '두란노사역자모임',
+    };
+
+    return displayNameMapping[activity.name] || activity.name;
+  };
+
   // 참가자 다이얼로그 열기
   const handleOpenParticipantsDialog = () => {
     setParticipantsDialogOpen(true);
@@ -554,28 +682,6 @@ const MeetingAdd: React.FC = () => {
     );
   }, []);
 
-  // 회원 상태 반환
-  const getMemberStatus = useCallback((member: Member): string => {
-    if (member.isNewMember === 'Y') return '새가족';
-    if (member.isLongTermAbsentee === 'Y') return '장기결석';
-    return member.roleName === '회원' ? '순원' : member.roleName || '순원';
-  }, []);
-
-  // 회원 상태 색상 반환
-  const getMemberStatusColor = useCallback((member: Member): string => {
-    if (member.isNewMember === 'Y') return '#FFE0B3'; // 파스텔 주황색
-    if (member.isLongTermAbsentee === 'Y') return '#FFCCCC'; // 파스텔 빨간색
-
-    const roleColors: { [key: string]: string } = {
-      순장: '#B3C6FF', // 파스텔 블루
-      EBS: '#FFF4B3', // 파스텔 옐로우
-      순원: '#C2E0C2', // 파스텔 그린
-      회원: '#D6EAD6', // 연한 파스텔 그린
-    };
-
-    return roleColors[member.roleName] || '#E0E0E0';
-  }, []);
-
   // 로딩 상태 초기화
   const initLoadingState = useCallback(() => {
     setLoadingState({
@@ -590,7 +696,7 @@ const MeetingAdd: React.FC = () => {
     });
   }, []);
 
-  // 로딩 상태 업데이트
+  // 로딩 상태 업데이트 (Vue 소스와 동일하게 업데이트)
   const updateLoadingState = useCallback(
     (step: number, text: string, progress: number) => {
       setLoadingState(prev => ({
@@ -600,6 +706,11 @@ const MeetingAdd: React.FC = () => {
         progressPercent: progress,
       }));
 
+      // 단계 전환 시 진동 피드백 (모바일에서만 동작)
+      if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(100);
+      }
+
       // 장시간 소요 감지
       const currentTime = Date.now();
       const elapsedTime = loadingState.startTime
@@ -608,14 +719,63 @@ const MeetingAdd: React.FC = () => {
 
       if (elapsedTime > 15 && !loadingState.hasLongDelay) {
         setLoadingState(prev => ({ ...prev, hasLongDelay: true }));
+
+        // 지연 감지 시 더 강한 진동 (모바일에서만 동작)
+        if (window.navigator && window.navigator.vibrate) {
+          window.navigator.vibrate([100, 50, 200]);
+        }
       }
     },
     [loadingState.startTime, loadingState.hasLongDelay]
   );
 
-  // 모임 정보 제출
+  // Vue 소스와 동일한 작업 취소 및 계속 기다리기 함수들
+  const cancelOperation = () => {
+    if (
+      window.confirm(
+        '정말 작업을 취소하시겠습니까?\n입력한 정보는 저장되지 않습니다.'
+      )
+    ) {
+      setLoadingState(prev => ({ ...prev, isLoading: false }));
+      setIsSubmitting(false);
+      setIsUploading(false);
+    }
+  };
+
+  const continueWaiting = () => {
+    setLoadingState(prev => ({ ...prev, hasLongDelay: false }));
+  };
+
+  // Vue 소스와 동일한 폼 초기화 함수
+  const resetForm = useCallback(() => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    setSelectedImage(null);
+    setImagePreview(null);
+    setSelectedActivity(null);
+    setStartTime('');
+    setEndTime('');
+    setMeetingDate(today);
+    setStartDate(today);
+    setEndDate(today);
+    setParticipantCount(0);
+    setLocation('');
+    setNotes('');
+
+    // 모든 회원의 참여 상태 초기화
+    setMembers(prev =>
+      prev.map(member => ({ ...member, isParticipating: false }))
+    );
+  }, []);
+
+  // 모임 정보 제출 (Vue 소스와 동일하게 업데이트)
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;
+
+    // 날짜 검증
+    if (!validateSelectedDate()) {
+      // 경고 대화상자가 표시되므로 여기서 함수 종료
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -629,28 +789,56 @@ const MeetingAdd: React.FC = () => {
         return;
       }
 
-      updateLoadingState(2, '이미지 업로드 중...', 30);
+      updateLoadingState(2, '이미지 업로드 준비 중...', 20);
 
       // 이미지 업로드 처리 (실제 구현 시 S3 업로드)
       let imageInfo = null;
       if (selectedImage) {
-        // TODO: 실제 S3 업로드 구현
-        console.log('이미지 업로드 시뮬레이션');
-        await new Promise(resolve => setTimeout(resolve, 2000)); // 시뮬레이션
-        imageInfo = {
-          url: imagePreview,
-          fileName: selectedImage.name,
-          fileSize: selectedImage.size,
-          fileType: selectedImage.type,
-        };
+        try {
+          updateLoadingState(2, '이미지 업로드 중...', 30);
+          setIsUploading(true);
+
+          // 파일 크기에 따른 예상 시간 계산
+          const fileSizeMB = selectedImage.size / (1024 * 1024);
+          setLoadingState(prev => ({
+            ...prev,
+            estimatedTimeLeft: Math.round(fileSizeMB * 5), // 1MB당 약 5초 예상
+          }));
+
+          // TODO: 실제 S3 업로드 구현
+          console.log('이미지 업로드 시뮬레이션');
+          await new Promise(resolve => setTimeout(resolve, 2000)); // 시뮬레이션
+
+          imageInfo = {
+            url: imagePreview,
+            fileName: selectedImage.name,
+            fileSize: selectedImage.size,
+            fileType: selectedImage.type,
+          };
+
+          console.log('📸 업로드된 이미지 정보:', imageInfo);
+          updateLoadingState(2, '이미지 업로드 완료', 40);
+        } catch (error) {
+          console.error('❌ 이미지 업로드 중 오류 발생:', error);
+          alert('이미지 업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
+          setIsSubmitting(false);
+          setIsUploading(false);
+          setLoadingState(prev => ({ ...prev, isLoading: false }));
+          return;
+        } finally {
+          setIsUploading(false);
+        }
+      } else {
+        updateLoadingState(2, '이미지 없음, 다음 단계로 진행', 40);
       }
 
       updateLoadingState(3, '참여자 정보 준비 중...', 60);
 
-      // 참여자 정보 수집
-      // const selectedParticipants = members.filter(
-      //   member => member.isParticipating
-      // );
+      // 선택된 참여자 목록 가져오기
+      const selectedParticipants = members.filter(
+        member => member.isParticipating
+      );
+      console.log('👥 선택된 참여자:', selectedParticipants);
 
       updateLoadingState(4, '모임 정보 저장 중...', 80);
 
@@ -688,6 +876,7 @@ const MeetingAdd: React.FC = () => {
       setTimeout(() => {
         setLoadingState(prev => ({ ...prev, isLoading: false }));
         alert('모임 정보가 성공적으로 저장되었습니다.');
+        resetForm();
         navigate('/main/meeting-records');
       }, 1000);
     } catch (error) {
@@ -714,7 +903,31 @@ const MeetingAdd: React.FC = () => {
     navigate,
     initLoadingState,
     updateLoadingState,
+    validateSelectedDate,
+    resetForm,
   ]);
+
+  // 참여자 상태 관련 함수들 (Vue 소스와 동일하게 업데이트)
+  const getMemberStatusClass = (member: Member): string => {
+    if (member.isNewMember === 'Y') return 'new-family';
+    if (member.roleId === 222) return 'leader'; // 순장
+    if (member.roleId === 223) return 'ebs'; // EBS
+    return 'member'; // 순원
+  };
+
+  const getMemberStatusText = (member: Member): string => {
+    if (member.isNewMember === 'Y') return '새가족';
+    if (member.roleId === 222) return '순장';
+    if (member.roleId === 223) return 'EBS';
+    return '순원';
+  };
+
+  // Vue 소스와 동일한 파일 업로드 상태 텍스트 함수
+  const getFileUploadStatus = (): string => {
+    if (!selectedImage) return '이미지 없음';
+    const fileSizeMB = (selectedImage.size / (1024 * 1024)).toFixed(1);
+    return `${fileSizeMB}MB 이미지 업로드 중`;
+  };
 
   return (
     <div className='meeting-add-container'>
@@ -797,7 +1010,10 @@ const MeetingAdd: React.FC = () => {
           <Select
             value={selectedActivity || ''}
             label='모임 종류 선택'
-            onChange={e => handleActivityChange(Number(e.target.value))}
+            onChange={e => {
+              handleActivityChange(Number(e.target.value));
+              setMeetingName();
+            }}
           >
             {activities.map(activity => (
               <MenuItem key={activity.id} value={activity.id}>
@@ -829,24 +1045,16 @@ const MeetingAdd: React.FC = () => {
           }}
         />
 
-        {/* 권장 요일 안내 */}
-        {selectedActivity &&
-          (() => {
-            const activity = activities.find(a => a.id === selectedActivity);
-            const defaults = activity ? activityDefaults[activity.name] : null;
-            if (defaults) {
-              return (
-                <Box className='recommended-day-notice'>
-                  <Warning color='info' fontSize='small' />
-                  <Typography variant='body2'>
-                    {activity!.name}은(는) {dayOfWeekTexts[defaults.dayOfWeek]}
-                    에 진행되는 모임입니다.
-                  </Typography>
-                </Box>
-              );
-            }
-            return null;
-          })()}
+        {/* 권장 요일 안내 (Vue 소스와 동일하게 업데이트) */}
+        {selectedActivity && getRecommendedDayOfWeek() !== null && (
+          <Box className='recommended-day-notice'>
+            <Warning color='info' fontSize='small' />
+            <Typography variant='body2'>
+              {getActivityName()}은(는) {getRecommendedDayOfWeekText()}에
+              진행되는 모임입니다.
+            </Typography>
+          </Box>
+        )}
 
         {/* 시작 일시 */}
         <Box className='date-time-section'>
@@ -873,7 +1081,10 @@ const MeetingAdd: React.FC = () => {
               type='time'
               label='시작 시간'
               value={startTime}
-              onChange={e => setStartTime(e.target.value)}
+              onChange={e => {
+                setStartTime(e.target.value);
+                validateTimes();
+              }}
               fullWidth
               variant='outlined'
               InputLabelProps={{ shrink: true }}
@@ -912,7 +1123,10 @@ const MeetingAdd: React.FC = () => {
               type='time'
               label='종료 시간'
               value={endTime}
-              onChange={e => setEndTime(e.target.value)}
+              onChange={e => {
+                setEndTime(e.target.value);
+                validateTimes();
+              }}
               fullWidth
               variant='outlined'
               InputLabelProps={{ shrink: true }}
@@ -1010,39 +1224,36 @@ const MeetingAdd: React.FC = () => {
         onClose={handleCloseParticipantsDialog}
         maxWidth='sm'
         fullWidth
+        className='participants-dialog'
       >
-        <DialogTitle>모임 참여자 선택</DialogTitle>
-        <DialogContent>
-          <List>
-            {members.map(member => (
-              <ListItem key={member.userId}>
-                <ListItemText
-                  primary={
-                    <Typography variant='h6' fontWeight='bold'>
-                      {member.name}
-                    </Typography>
-                  }
-                  secondary={
-                    <Chip
-                      label={getMemberStatus(member)}
-                      size='small'
-                      style={{
-                        backgroundColor: getMemberStatusColor(member),
-                        fontSize: '0.75rem',
-                      }}
-                    />
-                  }
-                />
-                <Switch
-                  checked={member.isParticipating || false}
-                  onChange={() => handleParticipantToggle(member.userId)}
-                />
-              </ListItem>
-            ))}
-          </List>
+        <DialogTitle className='participants-dialog-title'>
+          모임 참여자 선택
+        </DialogTitle>
+        <DialogContent className='participants-list'>
+          {members.map(member => (
+            <div key={member.userId} className='participant-item'>
+              <div className='participant-info'>
+                <div className='participant-name'>{member.name}</div>
+                <div
+                  className={`participant-label ${getMemberStatusClass(member)}`}
+                >
+                  {getMemberStatusText(member)}
+                </div>
+              </div>
+              <Switch
+                checked={member.isParticipating || false}
+                onChange={() => handleParticipantToggle(member.userId)}
+                className='participant-toggle'
+              />
+            </div>
+          ))}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseParticipantsDialog} variant='contained'>
+        <DialogActions className='participants-dialog-actions'>
+          <Button
+            onClick={handleCloseParticipantsDialog}
+            variant='contained'
+            className='common-button'
+          >
             완료
           </Button>
         </DialogActions>
@@ -1104,8 +1315,7 @@ const MeetingAdd: React.FC = () => {
                 이미지 업로드
                 {loadingState.currentStep === 2 && selectedImage && (
                   <Typography variant='caption' display='block'>
-                    {(selectedImage.size / (1024 * 1024)).toFixed(1)}MB 이미지
-                    업로드 중
+                    {getFileUploadStatus()}
                   </Typography>
                 )}
               </StepLabel>
@@ -1131,6 +1341,16 @@ const MeetingAdd: React.FC = () => {
               {loadingState.currentStepText}
             </Typography>
 
+            {loadingState.estimatedTimeLeft && (
+              <Typography
+                variant='body2'
+                align='center'
+                sx={{ mt: 1, color: 'text.secondary' }}
+              >
+                예상 소요 시간: {loadingState.estimatedTimeLeft}초
+              </Typography>
+            )}
+
             {loadingState.hasLongDelay && (
               <Box
                 className='delay-notice'
@@ -1151,28 +1371,10 @@ const MeetingAdd: React.FC = () => {
 
         {loadingState.hasLongDelay && (
           <DialogActions>
-            <Button
-              color='error'
-              onClick={() => {
-                if (
-                  window.confirm(
-                    '정말 작업을 취소하시겠습니까?\n입력한 정보는 저장되지 않습니다.'
-                  )
-                ) {
-                  setLoadingState(prev => ({ ...prev, isLoading: false }));
-                  setIsSubmitting(false);
-                  setIsUploading(false);
-                }
-              }}
-            >
+            <Button color='error' onClick={cancelOperation}>
               취소
             </Button>
-            <Button
-              color='primary'
-              onClick={() =>
-                setLoadingState(prev => ({ ...prev, hasLongDelay: false }))
-              }
-            >
+            <Button color='primary' onClick={continueWaiting}>
               계속 기다리기
             </Button>
           </DialogActions>

@@ -12,6 +12,7 @@
 <div align="center">
 
 ### 🎨 민트-스카이블루 테마의 모바일 최적화 디자인
+
 ![Welcome Screen](public/intro.png)
 
 </div>
@@ -19,33 +20,41 @@
 ## ✨ 주요 기능
 
 ### 🔐 사용자 인증
-- [x] 로그인/로그아웃
+
+- [x] 로그인/로그아웃 (임시 우회 구현)
 - [x] 사용자 찾기 (이름 + 전화번호)
 - [x] 이메일 인증
 - [x] 비밀번호 재설정
 - [x] 토큰 기반 인증
 
-### 📊 출석 관리
-- [x] 출석 현황 대시보드
-- [x] 출석 입력
-- [x] 출석 통계 및 차트
-- [ ] 출석 보고서 생성
-
 ### 👥 회원 관리
+
 - [x] 회원 목록 조회
-- [x] 회원 등록
+- [x] 회원 역할별 정렬 (순장 > EBS > 순원)
+- [x] 회원 상세 정보 표시
 - [ ] 회원 정보 수정
 - [ ] 회원 그룹 관리
 
-### 🙏 기타 기능
-- [x] 기도제목 관리
-- [ ] 교회 행사 관리
-- [ ] 알림 시스템
+### 📅 모임 관리
+
+- [x] 모임 기록 조회
+- [x] 새로운 모임 등록
+- [x] 이미지 업로드 및 압축
+- [x] 참여자 선택 및 출석 관리
+- [x] 권장 요일 검증
+
+### 🎨 UI/UX
+
+- [x] 모바일 최적화 디자인
+- [x] 민트-스카이블루 테마
+- [x] 반응형 레이아웃
+- [x] 로딩 상태 및 에러 처리
 
 ## 🚀 빠른 시작
 
 ### 필수 요구사항
-- Node.js 18+ 
+
+- Node.js 18+
 - npm 또는 yarn
 
 ### 설치 및 실행
@@ -79,6 +88,7 @@ REACT_APP_USE_MOCK=false
 ## 🛠️ 기술 스택
 
 ### Frontend
+
 - **React 18.3.1** - UI 라이브러리
 - **TypeScript 5.9.2** - 정적 타입 검사
 - **Material-UI 6.1.6** - UI 컴포넌트 라이브러리
@@ -87,6 +97,7 @@ REACT_APP_USE_MOCK=false
 - **Axios 1.7.9** - HTTP 클라이언트
 
 ### 개발 도구
+
 - **ESLint 9.17.0** - 코드 품질 검사
 - **Prettier 3.4.2** - 코드 포맷팅
 - **React Scripts 5.0.1** - 빌드 도구
@@ -97,17 +108,28 @@ REACT_APP_USE_MOCK=false
 src/
 ├── components/          # React 컴포넌트
 │   ├── auth/           # 인증 관련 컴포넌트
-│   ├── attendance/     # 출석 관리 컴포넌트
-│   ├── members/        # 회원 관리 컴포넌트
 │   ├── main/           # 메인 페이지 컴포넌트
-│   └── layouts/        # 레이아웃 컴포넌트
-├── store/              # Redux 상태 관리
-│   └── slices/         # Redux Toolkit slices
-├── utils/              # 유틸리티 함수
-├── types/              # TypeScript 타입 정의
-├── styles/             # 글로벌 스타일
-└── App.tsx            # 메인 앱 컴포넌트
+│   ├── members/        # 회원 관리 컴포넌트
+│   ├── layouts/        # 레이아웃 컴포넌트
+│   └── ui/             # 공통 UI 컴포넌트
+├── hooks/               # 커스텀 훅
+├── utils/               # 유틸리티 함수
+├── store/               # Redux 상태 관리
+├── types/               # TypeScript 타입 정의
+└── styles/              # 글로벌 스타일
 ```
+
+│ ├── members/ # 회원 관리 컴포넌트
+│ ├── main/ # 메인 페이지 컴포넌트
+│ └── layouts/ # 레이아웃 컴포넌트
+├── store/ # Redux 상태 관리
+│ └── slices/ # Redux Toolkit slices
+├── utils/ # 유틸리티 함수
+├── types/ # TypeScript 타입 정의
+├── styles/ # 글로벌 스타일
+└── App.tsx # 메인 앱 컴포넌트
+
+````
 
 ## 🎨 디자인 시스템
 
@@ -118,16 +140,17 @@ src/
   --primary: #4ecdc4;           /* 민트 그린 */
   --primary-light: #a6e7e2;    /* 연한 민트 */
   --primary-dark: #3aa39b;     /* 진한 민트 */
-  
+
   --secondary: #5dade2;         /* 스카이 블루 */
   --secondary-light: #8cd6ff;  /* 연한 스카이 블루 */
   --secondary-dark: #0096ee;   /* 진한 스카이 블루 */
-  
+
   --accent: #a8e6cf;           /* 연한 민트 악센트 */
 }
-```
+````
 
 ### 타이포그래피
+
 - **폰트**: NotoSansCJKKR, -apple-system, BlinkMacSystemFont
 - **반응형 크기**: 12px ~ 48px
 - **라인 높이**: 1.2 ~ 1.75
@@ -184,12 +207,14 @@ npm test -- --coverage
 ## 🚀 배포
 
 ### Vercel 배포
+
 ```bash
 npm run build
 # vercel CLI를 사용하거나 GitHub 연동
 ```
 
 ### Docker 배포
+
 ```dockerfile
 FROM node:18-alpine
 WORKDIR /app
@@ -210,6 +235,7 @@ CMD ["npm", "start"]
 5. Open a Pull Request
 
 ### 코딩 컨벤션
+
 - **ESLint + Prettier** 설정 준수
 - **TypeScript** 엄격 모드 사용
 - **컴포넌트**: PascalCase
@@ -236,7 +262,7 @@ chore: 빌드 업무 수정, 패키지 매니저 수정
 
 **Tychicus**는 사도 바울의 동역자였던 두기고의 이름에서 따온 것으로, 교회 공동체를 섬기는 마음을 담았습니다. 이 시스템은 교회의 출석 관리를 효율적으로 도와 목회자와 성도들이 더 나은 교제와 섬김에 집중할 수 있도록 돕습니다.
 
-> *"믿음의 눈으로 약속의 땅을 차지할 하나님 나라의 청년!"*
+> _"믿음의 눈으로 약속의 땅을 차지할 하나님 나라의 청년!"_
 
 ## 📞 문의
 

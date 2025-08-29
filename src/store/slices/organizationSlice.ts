@@ -74,7 +74,9 @@ const organizationSlice = createSlice({
       state.members.push(action.payload);
     },
     updateMember: (state, action: PayloadAction<Member>) => {
-      const index = state.members.findIndex(m => m.id === action.payload.id);
+      const index = state.members.findIndex(
+        m => m.userId === action.payload.userId
+      );
       if (index !== -1) {
         state.members[index] = action.payload;
       }

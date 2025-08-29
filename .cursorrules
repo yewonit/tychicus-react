@@ -276,6 +276,50 @@ const Input = styled.input`
 - 코드 스플리팅 (React.lazy)
 - Virtual scrolling (긴 목록)
 
+### useCallback 사용 가이드라인
+
+#### ✅ 사용해야 하는 경우
+- **복잡한 계산 함수** (useMemo와 함께)
+- **자식 컴포넌트에 props로 전달** (React.memo와 함께)
+- **의존성이 자주 변경되는 함수**
+- **API 호출이나 비동기 작업**
+- **이벤트 핸들러가 다른 컴포넌트에 전달되는 경우**
+
+#### ❌ 사용하지 않아도 되는 경우
+- **의존성 배열이 비어있는 함수** (항상 같은 함수)
+- **단순한 값 반환 함수**
+- **컴포넌트 내부에서만 사용되는 함수**
+- **렌더링마다 새로 생성되어도 괜찮은 함수**
+
+#### 🎯 최적화 원칙
+1. **Premature Optimization is Evil** - 성능 문제가 실제로 발생하기 전까지는 단순하게
+2. **실제 병목 지점 찾기** - React DevTools Profiler로 실제 성능 측정
+3. **단계적 최적화** - 먼저 단순하게 구현 → 성능 문제 발생 시 측정 → 필요한 부분만 최적화
+
+#### 📝 코드 예시
+```typescript
+// ❌ 불필요한 useCallback
+const getMemberStatus = useCallback((member: Member): string => {
+  return member.isNewMember === 'Y' ? '새가족' : member.roleName;
+}, []); // 의존성 배열이 비어있음 = 매번 같은 함수
+
+// ✅ 단순한 함수로 충분
+const getMemberStatus = (member: Member): string => {
+  return member.isNewMember === 'Y' ? '새가족' : member.roleName;
+};
+
+// ✅ 필요한 useCallback (API 호출)
+const fetchMembers = useCallback(async () => {
+  const response = await api.getMembers(organizationId);
+  setMembers(response.data);
+}, [organizationId]);
+
+// ✅ 필요한 useCallback (복잡한 이벤트 핸들러)
+const handleSubmit = useCallback(async () => {
+  // 복잡한 비동기 로직
+}, [formData, validationRules, submitHandler]);
+```
+
 ## 상태 관리 패턴
 Context API + useReducer 조합:
 
