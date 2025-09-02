@@ -29,25 +29,19 @@ import {
 } from '@mui/material';
 import { addDays, format, getDay, subDays } from 'date-fns';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axiosClient from '../../utils/axiosClient';
+import { useSelector } from 'react-redux';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { RootState } from '../../store';
+import { attendanceService, memberService } from '../../utils';
+import * as dateUtils from '../../utils/dateUtils';
+
+import { Member } from '../../utils/memberService';
 
 interface MeetingActivity {
   id: number;
   name: string;
   category: string;
   description?: string;
-}
-
-interface Member {
-  userId: number;
-  name: string;
-  nameSuffix: string;
-  roleId: number;
-  roleName: string;
-  isNewMember: 'Y' | 'N';
-  isLongTermAbsentee: 'Y' | 'N';
-  isParticipating?: boolean;
 }
 
 interface ActivityDefaults {
@@ -71,6 +65,13 @@ interface LoadingState {
 
 const MeetingAdd: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // 수정 모드 관련 상태
+  const isEditMode = searchParams.get('edit') === 'true';
+  const editOrganizationId = searchParams.get('organizationId');
+  const editActivityId = searchParams.get('activityId');
+  const editInstanceId = searchParams.get('instanceId');
 
   // 기본 상태
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -196,7 +197,10 @@ const MeetingAdd: React.FC = () => {
     '토요일',
   ];
 
-  const organizationId = 106; // 임시로 고정값 사용
+  const organizationId =
+    useSelector(
+      (state: RootState) => state.organization.currentOrganizationId
+    ) || '106';
 
   // 활동 목록 조회 (Vue 소스와 동일하게 업데이트)
   const fetchActivities = useCallback(async () => {
@@ -254,11 +258,10 @@ const MeetingAdd: React.FC = () => {
     try {
       console.log('📢 회원 목록 조회 시작');
 
-      const response = await axiosClient.get('/current-members', {
-        params: { organizationId: organizationId },
-      });
+      const response =
+        await memberService.getOrganizationMembers(organizationId);
 
-      const memberList = response.data || [];
+      const memberList = response.members || [];
 
       // Vue 소스와 동일한 우선순위 정렬
       memberList.sort((a: Member, b: Member) => {
@@ -287,13 +290,83 @@ const MeetingAdd: React.FC = () => {
     } catch (error) {
       console.error('❌ 회원 목록 조회 중 오류 발생:', error);
     }
-  }, []);
+  }, [organizationId]);
 
   // 초기 데이터 로딩
   useEffect(() => {
     fetchActivities();
     fetchMembers();
-  }, [fetchActivities, fetchMembers]);
+
+    // 수정 모드인 경우 기존 데이터 로딩
+    if (isEditMode && editOrganizationId && editActivityId && editInstanceId) {
+      fetchExistingMeetingData();
+    }
+  }, [
+    fetchActivities,
+    fetchMembers,
+    isEditMode,
+    editOrganizationId,
+    editActivityId,
+    editInstanceId,
+  ]);
+
+  // 기존 모임 데이터 로딩
+  const fetchExistingMeetingData = useCallback(async () => {
+    try {
+      console.log('📢 기존 모임 데이터 로딩 시작');
+
+      // 실제 API 호출
+      const response = await attendanceService.getActivityInstanceDetails(
+        editOrganizationId!,
+        editActivityId!,
+        editInstanceId!
+      );
+
+      const activityInstance = response.activityInstance;
+
+      // 폼 데이터 설정
+      setSelectedActivity(activityInstance.activityId);
+      setStartDate(
+        dateUtils.formatApiDate(new Date(activityInstance.startDateTime))
+      );
+      setEndDate(
+        dateUtils.formatApiDate(new Date(activityInstance.endDateTime))
+      );
+      setStartTime(
+        dateUtils.formatTime(
+          new Date(activityInstance.startDateTime).toTimeString().slice(0, 5)
+        )
+      );
+      setEndTime(
+        dateUtils.formatTime(
+          new Date(activityInstance.endDateTime).toTimeString().slice(0, 5)
+        )
+      );
+      setLocation(activityInstance.location);
+      setNotes(activityInstance.notes);
+
+      // 기존 이미지 설정
+      if (activityInstance.images && activityInstance.images.length > 0) {
+        const firstImage = activityInstance.images[0];
+        setImagePreview(firstImage.filePath);
+      }
+
+      // 참가자 상태 설정
+      setMembers(prev =>
+        prev.map(member => ({
+          ...member,
+          isParticipating: activityInstance.attendances.some(
+            attendance =>
+              attendance.userId === member.id && attendance.status === '출석'
+          ),
+        }))
+      );
+
+      console.log('✅ 기존 모임 데이터 로딩 완료');
+    } catch (error) {
+      console.error('❌ 기존 모임 데이터 로딩 중 오류 발생:', error);
+    }
+  }, [editOrganizationId, editActivityId, editInstanceId]);
 
   // 뒤로가기 및 닫기 핸들러
   const handleBack = () => {
@@ -672,10 +745,10 @@ const MeetingAdd: React.FC = () => {
   };
 
   // 참가자 선택 토글
-  const handleParticipantToggle = useCallback((userId: number) => {
+  const handleParticipantToggle = useCallback((id: number) => {
     setMembers(prev =>
       prev.map(member =>
-        member.userId === userId
+        member.id === id
           ? { ...member, isParticipating: !member.isParticipating }
           : member
       )
@@ -810,10 +883,8 @@ const MeetingAdd: React.FC = () => {
           await new Promise(resolve => setTimeout(resolve, 2000)); // 시뮬레이션
 
           imageInfo = {
-            url: imagePreview,
+            url: imagePreview || '',
             fileName: selectedImage.name,
-            fileSize: selectedImage.size,
-            fileType: selectedImage.type,
           };
 
           console.log('📸 업로드된 이미지 정보:', imageInfo);
@@ -847,19 +918,27 @@ const MeetingAdd: React.FC = () => {
         organizationId,
         activityId: selectedActivity,
         instanceData: {
-          startDateTime: new Date(`${startDate} ${startTime}`).toISOString(),
-          endDateTime: new Date(`${endDate} ${endTime}`).toISOString(),
+          startDateTime: dateUtils.toUTCString(
+            dateUtils.createDateTime(startDate, startTime)
+          ),
+          endDateTime: dateUtils.toUTCString(
+            dateUtils.createDateTime(endDate, endTime)
+          ),
           location: location || '',
           notes: notes || '',
         },
         attendances: members.map(member => ({
-          userId: member.userId,
-          status: member.isParticipating ? '출석' : '결석',
+          userId: member.id,
+          status: member.isParticipating
+            ? ('출석' as const)
+            : ('결석' as const),
           checkInTime: member.isParticipating
-            ? new Date(`${startDate} ${startTime}`).toISOString()
+            ? dateUtils.toUTCString(
+                dateUtils.createDateTime(startDate, startTime)
+              )
             : null,
           checkOutTime: member.isParticipating
-            ? new Date(`${endDate} ${endTime}`).toISOString()
+            ? dateUtils.toUTCString(dateUtils.createDateTime(endDate, endTime))
             : null,
           note: '',
         })),
@@ -868,8 +947,37 @@ const MeetingAdd: React.FC = () => {
 
       console.log('📝 모임 데이터:', meetingData);
 
-      // TODO: 실제 API 호출
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 시뮬레이션
+      // 실제 API 호출 (새로 추가 또는 수정)
+      let response;
+      if (isEditMode && editInstanceId) {
+        // 수정 모드
+        response = await attendanceService.updateAttendance(
+          organizationId,
+          selectedActivity.toString(),
+          editInstanceId,
+          meetingData.instanceData,
+          meetingData.attendances,
+          imageInfo,
+          true // showLog
+        );
+      } else {
+        // 새로 추가 모드
+        response = await attendanceService.recordAttendance(
+          organizationId,
+          selectedActivity.toString(),
+          meetingData.instanceData,
+          meetingData.attendances,
+          imageInfo
+        );
+      }
+
+      if (response.result !== 0 && response.result !== 1) {
+        throw new Error(
+          isEditMode
+            ? '모임 정보 수정에 실패했습니다.'
+            : '출석 정보 저장에 실패했습니다.'
+        );
+      }
 
       updateLoadingState(5, '모임 정보 저장 완료', 100);
 
@@ -937,7 +1045,9 @@ const MeetingAdd: React.FC = () => {
           <button className='meeting-back-button' onClick={handleBack}>
             <ArrowBack style={{ fontSize: 24 }} />
           </button>
-          <h1 className='meeting-title'>새로운 모임 등록</h1>
+          <h1 className='meeting-title'>
+            {isEditMode ? '모임 기록 수정' : '새로운 모임 등록'}
+          </h1>
         </div>
         <button className='meeting-close-button' onClick={handleClose}>
           <Close style={{ fontSize: 24 }} />
@@ -1231,7 +1341,7 @@ const MeetingAdd: React.FC = () => {
         </DialogTitle>
         <DialogContent className='participants-list'>
           {members.map(member => (
-            <div key={member.userId} className='participant-item'>
+            <div key={member.id} className='participant-item'>
               <div className='participant-info'>
                 <div className='participant-name'>{member.name}</div>
                 <div
@@ -1242,7 +1352,7 @@ const MeetingAdd: React.FC = () => {
               </div>
               <Switch
                 checked={member.isParticipating || false}
-                onChange={() => handleParticipantToggle(member.userId)}
+                onChange={() => handleParticipantToggle(member.id)}
                 className='participant-toggle'
               />
             </div>

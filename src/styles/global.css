@@ -1218,13 +1218,13 @@ body {
 }
 
 /* ========================
-   모임기록관리 페이지 스타일
+   모임기록관리 페이지 스타일 (Material-UI 기반)
    ======================== */
 .meeting-records-container {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: var(--spacing-lg) var(--spacing-md);
-  background-color: #f5f5f5;
+  background-color: var(--bg-secondary);
   min-height: 100vh;
 }
 
@@ -1234,6 +1234,10 @@ body {
   justify-content: space-between;
   margin-bottom: var(--spacing-xl);
   padding: var(--spacing-md) 0;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-light);
 }
 
 .meeting-header-left {
@@ -1250,6 +1254,9 @@ body {
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .meeting-back-button:hover {
@@ -1272,6 +1279,9 @@ body {
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .meeting-close-button:hover {
@@ -1279,48 +1289,19 @@ body {
   color: var(--text-primary);
 }
 
-.meeting-cards-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-  margin-bottom: 100px; /* 플로팅 버튼 공간 확보 */
+.meeting-add-button {
+  background: var(--gradient-primary) !important;
+  box-shadow: var(--shadow-button) !important;
+  transition: all 0.3s ease !important;
 }
 
-.meeting-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-light);
-  transition: all 0.3s ease;
+.meeting-add-button:hover {
+  background: var(--gradient-primary-hover) !important;
+  box-shadow: var(--shadow-button-hover) !important;
+  transform: translateY(-2px) !important;
 }
 
-.meeting-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.meeting-image-area {
-  height: 200px;
-  background: linear-gradient(135deg, #e8f7f7 0%, #f0f9f9 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  position: relative;
-  background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTM1IDEwSDE1QzEzLjM0MzEgMTAgMTIgMTEuMzQzMSAxMiAxM1YyN0MxMiAyOC42NTY5IDEzLjM0MzEgMzAgMTUgMzBIMzVDMzYuNjU2OSAzMCAzOCAyOC42NTY5IDM4IDI3VjEzQzM4IDExLjM0MzEgMzYuNjU2OSAxMCAzNSAxMFoiIHN0cm9rZT0iIzc4OTA5QyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPHBhdGggZD0iTTEyIDIxTDIwIDEzTDMwIDIzTDM4IDE1IiBzdHJva2U9IiM3ODkwOUMiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+');
-  background-repeat: no-repeat;
-  background-position: center 60px;
-}
-
-.coram-deo-logo {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--primary);
-  margin-bottom: var(--spacing-sm);
-  text-shadow: 1px 1px 2px rgba(78, 205, 196, 0.3);
-}
+/* 기존 스타일들 제거하고 새로운 Material-UI 기반 스타일만 유지 */
 
 .image-upload-text {
   font-size: var(--font-size-base);

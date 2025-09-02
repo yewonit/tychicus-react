@@ -2,6 +2,8 @@ import { addDays, format, getDay, isValid, parseISO, subDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { DATE_FORMATS, DAY_OF_WEEK_TEXTS } from './constants';
 
+export const KOREA_TIMEZONE = 'Asia/Seoul';
+
 /**
  * 날짜를 표시 형식으로 변환
  */
@@ -172,4 +174,143 @@ export const createDateRange = (
   } catch (error) {
     return [];
   }
+};
+
+/**
+ * 날짜 포맷팅 (MeetingHistoryView용)
+ */
+export const formatDate = (dateString: string): string => {
+  if (dateString === '날짜 미정') return dateString;
+
+  try {
+    const date = parseISO(dateString);
+    if (!isValid(date)) return '날짜 오류';
+
+    return format(date, 'yyyy년 MM월 dd일 EEEE', { locale: ko });
+  } catch (error) {
+    return '날짜 오류';
+  }
+};
+
+/**
+ * 날짜시간 포맷팅 (MeetingHistoryView용)
+ */
+export const formatDateTime = (dateString: string): string => {
+  if (!dateString) return '등록일 정보 없음';
+
+  try {
+    const date = parseISO(dateString);
+    if (!isValid(date)) return '날짜 오류';
+
+    return format(date, 'yyyy년 MM월 dd일 HH:mm');
+  } catch (error) {
+    return '날짜 오류';
+  }
+};
+
+/**
+ * 주차 계산 (MeetingHistoryView용)
+ */
+export const getWeekOfMonth = (date: Date) => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  const sundayOfWeek = new Date(date);
+  while (sundayOfWeek.getDay() !== 0) {
+    sundayOfWeek.setDate(sundayOfWeek.getDate() - 1);
+  }
+
+  if (sundayOfWeek.getMonth() !== month) {
+    return {
+      month: sundayOfWeek.getMonth() + 1,
+      weekNumber: getLastWeekOfMonth(sundayOfWeek),
+    };
+  }
+
+  const firstSundayOfMonth = new Date(year, month, 1);
+  while (firstSundayOfMonth.getDay() !== 0) {
+    firstSundayOfMonth.setDate(firstSundayOfMonth.getDate() + 1);
+  }
+
+  const weekNumber =
+    Math.floor(
+      (sundayOfWeek.getTime() - firstSundayOfMonth.getTime()) /
+        (7 * 24 * 60 * 60 * 1000)
+    ) + 1;
+
+  return {
+    month: month + 1,
+    weekNumber: Math.min(weekNumber, 5),
+  };
+};
+
+/**
+ * 월의 마지막 주차 계산 (MeetingHistoryView용)
+ */
+export const getLastWeekOfMonth = (date: Date): number => {
+  const lastDayOfPrevMonth = new Date(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    0
+  );
+  const lastSundayOfMonth = new Date(lastDayOfPrevMonth);
+
+  while (lastSundayOfMonth.getDay() !== 0) {
+    lastSundayOfMonth.setDate(lastSundayOfMonth.getDate() - 1);
+  }
+
+  const firstSundayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+  while (firstSundayOfMonth.getDay() !== 0) {
+    firstSundayOfMonth.setDate(firstSundayOfMonth.getDate() + 1);
+  }
+
+  const weeksCount =
+    Math.floor(
+      (lastSundayOfMonth.getTime() - firstSundayOfMonth.getTime()) /
+        (7 * 24 * 60 * 60 * 1000)
+    ) + 1;
+
+  return Math.min(weeksCount, 5);
+};
+
+/**
+ * 날짜와 시간으로 DateTime 생성
+ */
+export const createDateTime = (date: string, time: string = '00:00'): Date => {
+  return new Date(`${date} ${time}`);
+};
+
+/**
+ * UTC 문자열로 변환
+ */
+export const toUTCString = (dateTime: Date): string => {
+  return dateTime.toISOString();
+};
+
+/**
+ * 오늘 날짜 문자열 반환
+ */
+export const getTodayString = (): string => {
+  return format(new Date(), 'yyyy-MM-dd');
+};
+
+/**
+ * 특정 요일의 가장 최근 과거 날짜 반환
+ */
+export const getNearestPastDate = (dayOfWeek: number): string => {
+  const today = new Date();
+  const todayDayOfWeek = getDay(today);
+
+  let daysToSubtract: number;
+
+  if (todayDayOfWeek === dayOfWeek) {
+    daysToSubtract = 0;
+  } else if (todayDayOfWeek > dayOfWeek) {
+    daysToSubtract = todayDayOfWeek - dayOfWeek;
+  } else {
+    daysToSubtract = 7 - (dayOfWeek - todayDayOfWeek);
+  }
+
+  const targetDate = subDays(today, daysToSubtract);
+  return format(targetDate, 'yyyy-MM-dd');
 };

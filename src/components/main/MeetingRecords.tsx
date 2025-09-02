@@ -9,70 +9,70 @@ import {
 import {
   Box,
   Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardMedia,
+  Chip,
+  Container,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Fab,
+  Grid,
+  IconButton,
   MenuItem,
   TextField,
+  Typography,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { RootState } from '../../store';
+import {
+  Activity,
+  ActivityInstance,
+  attendanceService,
+} from '../../utils/attendanceService';
+import {
+  formatDate,
+  formatDateTime,
+  getWeekOfMonth,
+} from '../../utils/dateUtils';
+import { createDummyData } from '../../utils/dummyMeetingData';
+import { LoadingSpinner } from '../ui';
 
 interface MeetingRecord {
-  id: string;
-  title: string;
+  id: number;
+  activityId: number;
+  activityName: string;
   date: string;
-  week: string; // 예: "8월 3주차"
-  type: '청년예배' | '주일3부예배' | '수요예배' | '새벽기도' | '구역모임';
-  recordDate: string; // 모임 기록일시
-  imageUrl?: string;
-  organizationId?: string;
-  activityId?: string;
-  activityInstanceId?: string;
+  image: string;
+  category: string;
+  createdAt: string;
+  location?: string;
+  attendanceCount?: number;
+  notes?: string;
 }
 
 const MeetingRecords: React.FC = () => {
   const navigate = useNavigate();
+  const currentOrganizationId = useSelector(
+    (state: RootState) => state.organization.currentOrganizationId
+  );
 
-  const [meetings, setMeetings] = useState<MeetingRecord[]>([
-    {
-      id: '1',
-      title: '청년예배',
-      date: '2025년 8월 17일 일요일',
-      week: '8월 3주차',
-      type: '청년예배',
-      recordDate: '2025년 8월 18일 오전 07:28',
-      imageUrl: undefined,
-      organizationId: '106',
-      activityId: '1',
-      activityInstanceId: '1',
-    },
-    {
-      id: '2',
-      title: '주일3부예배',
-      date: '2025년 8월 17일 일요일',
-      week: '8월 3주차',
-      type: '주일3부예배',
-      recordDate: '2025년 8월 18일 오전 07:28',
-      imageUrl: undefined,
-      organizationId: '106',
-      activityId: '2',
-      activityInstanceId: '2',
-    },
-  ]);
-
+  const [meetings, setMeetings] = useState<MeetingRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [dialog, setDialog] = useState({ open: false, message: '' });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState<MeetingRecord | null>(
     null
   );
   const [formData, setFormData] = useState<Partial<MeetingRecord>>({
-    title: '',
+    activityName: '',
     date: '',
-    week: '',
-    type: '청년예배',
-    recordDate: '',
+    category: '',
   });
 
   const meetingTypes = [
@@ -82,6 +82,82 @@ const MeetingRecords: React.FC = () => {
     '새벽기도',
     '구역모임',
   ] as const;
+
+  useEffect(() => {
+    // 더미 데이터로 테스트
+    fetchMeetings();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchMeetings = async () => {
+    setLoading(true);
+    try {
+      // 더미 데이터 사용 (테스트용)
+      const response = createDummyData();
+
+      // 실제 API 호출 (주석 처리)
+      // const response = await attendanceService.getOrganizationActivities(
+      //   currentOrganizationId,
+      //   true
+      // );
+
+      if (response && response.activities) {
+        const processedMeetings = response.activities.flatMap(
+          (activity: Activity) => {
+            if (activity.instances && activity.instances.length > 0) {
+              return activity.instances.map((instance: ActivityInstance) => ({
+                id: instance.id,
+                activityId: activity.id,
+                activityName: activity.name,
+                date: instance.start_datetime || '날짜 미정',
+                image: '/dummy-meeting-image.jpg',
+                category: activity.category,
+                createdAt: instance.created_at,
+                location: instance.actual_location,
+                attendanceCount: instance.attendance_count,
+                notes: instance.notes,
+              }));
+            }
+            return [];
+          }
+        );
+
+        // 최신순으로 정렬
+        processedMeetings.sort((a: MeetingRecord, b: MeetingRecord) => {
+          if (a.date === '날짜 미정') return 1;
+          if (b.date === '날짜 미정') return -1;
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
+
+        setMeetings(processedMeetings);
+      }
+    } catch (error) {
+      console.error('미팅 정보 조회 실패:', error);
+      setMeetings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getWeekTagColor = (dateString: string) => {
+    if (dateString === '날짜 미정') return 'default';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'default';
+
+    const weekInfo = getWeekOfMonth(date);
+    const weekNumber = weekInfo.weekNumber;
+
+    const colors = ['primary', 'success', 'warning', 'error', 'secondary'];
+    return colors[(weekNumber - 1) % colors.length];
+  };
+
+  const getMonthWeekTag = (dateString: string) => {
+    if (dateString === '날짜 미정') return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+
+    const weekInfo = getWeekOfMonth(date);
+    return `${weekInfo.month}월 ${weekInfo.weekNumber}주차`;
+  };
 
   const handleBack = () => {
     navigate('/main/service-selection');
@@ -98,24 +174,19 @@ const MeetingRecords: React.FC = () => {
     } else {
       setEditingMeeting(null);
       setFormData({
-        title: '',
+        activityName: '',
         date: '',
-        week: '',
-        type: '청년예배',
-        recordDate: '',
+        category: '',
       });
     }
     setIsDialogOpen(true);
   };
 
   const handleViewDetail = (meeting: MeetingRecord) => {
-    if (
-      meeting.organizationId &&
-      meeting.activityId &&
-      meeting.activityInstanceId
-    ) {
+    const orgId = currentOrganizationId || '106'; // 기본값 사용
+    if (orgId && meeting.activityId && meeting.id) {
       navigate(
-        `/main/meeting-detail/${meeting.organizationId}/${meeting.activityId}/${meeting.activityInstanceId}`
+        `/main/meeting-detail/${orgId}/${meeting.activityId}/${meeting.id}`
       );
     }
   };
@@ -127,6 +198,7 @@ const MeetingRecords: React.FC = () => {
   };
 
   const handleSave = () => {
+    // TODO: 실제 API 연동 구현
     if (editingMeeting) {
       // 수정
       setMeetings(prev =>
@@ -139,52 +211,75 @@ const MeetingRecords: React.FC = () => {
     } else {
       // 새로 추가
       const newMeeting: MeetingRecord = {
-        id: Date.now().toString(),
-        title: formData.title || '',
+        id: Date.now(),
+        activityId: 0,
+        activityName: formData.activityName || '',
         date: formData.date || '',
-        week: formData.week || '',
-        type: formData.type || '청년예배',
-        recordDate: formData.recordDate || new Date().toLocaleString('ko-KR'),
+        image: '/dummy-meeting-image.jpg',
+        category: formData.category || '청년예배',
+        createdAt: new Date().toISOString(),
       };
       setMeetings(prev => [...prev, newMeeting]);
     }
     handleCloseDialog();
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
-      setMeetings(prev => prev.filter(meeting => meeting.id !== id));
+  const handleDelete = async (meeting: MeetingRecord) => {
+    if (!currentOrganizationId) {
+      console.warn('currentOrganizationId가 없습니다.');
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `정말로 "${meeting.activityName}" 모임을 삭제하시겠습니까?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await attendanceService.deleteActivityInstance(
+        currentOrganizationId,
+        meeting.activityId.toString(),
+        meeting.id.toString()
+      );
+
+      if (response && response.deletedActivityInstanceId) {
+        setDialog({
+          open: true,
+          message: `모임 "${meeting.activityName}"이(가) 성공적으로 삭제되었습니다.`,
+        });
+        await fetchMeetings();
+      } else {
+        setDialog({
+          open: true,
+          message: `모임 "${meeting.activityName}" 삭제에 실패했습니다. 다시 시도해 주세요.`,
+        });
+      }
+    } catch (error) {
+      console.error('모임 삭제 실패:', error);
+      setDialog({
+        open: true,
+        message: `모임 삭제 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
+      });
     }
   };
 
-  const handleEdit = (id: string) => {
-    const meeting = meetings.find(m => m.id === id);
-    if (meeting) {
-      handleOpenDialog(meeting);
-    }
+  const handleEdit = (meeting: MeetingRecord) => {
+    const orgId = currentOrganizationId || '106'; // 기본값 사용
+    navigate(
+      `/main/meeting-add?edit=true&organizationId=${orgId}&activityId=${meeting.activityId}&instanceId=${meeting.id}`
+    );
   };
 
-  const handleDetail = (id: string) => {
-    // TODO: 상세보기 기능 구현
-    alert(`모임 ${id} 상세보기 기능을 구현 예정입니다.`);
+  const goToAttendanceInput = () => {
+    navigate('/main/meeting-add');
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case '청년예배':
-        return '#ffa726'; // 주황색
-      case '주일3부예배':
-        return '#ffa726'; // 주황색
-      case '수요예배':
-        return '#5dade2';
-      case '새벽기도':
-        return '#f39c12';
-      case '구역모임':
-        return '#e74c3c';
-      default:
-        return '#9b59b6';
-    }
-  };
+  if (loading) {
+    return <LoadingSpinner message='미팅 목록을 불러오는 중...' />;
+  }
 
   return (
     <div className='meeting-records-container'>
@@ -202,74 +297,107 @@ const MeetingRecords: React.FC = () => {
       </div>
 
       {/* 모임 카드들 */}
-      <div className='meeting-cards-container'>
-        {meetings.map(meeting => (
-          <div key={meeting.id} className='meeting-card'>
-            {/* 이미지 업로드 영역 */}
-            <div className='meeting-image-area'>
-              <div className='coram-deo-logo'>CoramDeo</div>
-              <div className='image-upload-text'>⬆ 이미지를 업로드하세요</div>
-              <div className='upload-text-en'>Upload Image</div>
-            </div>
-
-            {/* 모임 정보 */}
-            <div className='meeting-info'>
-              {/* 주차 태그 */}
-              <div
-                className='meeting-week-tag'
-                style={{ backgroundColor: getTypeColor(meeting.type) }}
-              >
-                {meeting.week} {meeting.type}
-              </div>
-
-              {/* 날짜 정보 */}
-              <div className='meeting-date-info'>
-                <div className='calendar-icon'>📅</div>
-                <div className='meeting-date'>{meeting.date}</div>
-              </div>
-
-              {/* 기록일시 */}
-              <div className='meeting-record-info'>
-                <div className='clock-icon'>🕐</div>
-                <div className='meeting-record-text'>
-                  모임 기록일시: {meeting.recordDate}
-                </div>
-              </div>
-
-              {/* 액션 버튼들 */}
-              <div className='meeting-actions'>
-                <button
-                  className='meeting-action-button edit'
-                  onClick={() => handleEdit(meeting.id)}
-                  title='수정'
+      <Container maxWidth='lg' sx={{ pb: 8 }}>
+        {meetings.length > 0 ? (
+          <Grid container spacing={3}>
+            {meetings.map(meeting => (
+              <Grid item xs={12} sm={6} md={4} key={meeting.id}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
                 >
-                  <Edit style={{ fontSize: 20 }} />
-                </button>
-                <button
-                  className='meeting-action-button delete'
-                  onClick={() => handleDelete(meeting.id)}
-                  title='삭제'
-                >
-                  <Delete style={{ fontSize: 20 }} />
-                </button>
-                <button
-                  className='meeting-action-button detail'
-                  onClick={() => handleViewDetail(meeting)}
-                  title='상세보기'
-                >
-                  <RemoveRedEye style={{ fontSize: 20 }} />
-                  <span className='detail-text'>상세보기</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+                  <CardMedia
+                    component='img'
+                    height='200'
+                    image={meeting.image}
+                    alt={meeting.activityName}
+                    sx={{ objectFit: 'cover' }}
+                  />
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Box display='flex' alignItems='center' mb={1}>
+                      {meeting.date !== '날짜 미정' && (
+                        <Chip
+                          size='small'
+                          label={getMonthWeekTag(meeting.date)}
+                          color={getWeekTagColor(meeting.date) as any}
+                          sx={{ mr: 1 }}
+                        />
+                      )}
+                      <Typography variant='h6' component='h2'>
+                        {meeting.activityName}
+                      </Typography>
+                    </Box>
+                    <Typography variant='body2' color='text.secondary' mb={1}>
+                      📅 {formatDate(meeting.date)}
+                    </Typography>
+                    {meeting.location && (
+                      <Typography variant='body2' color='text.secondary' mb={1}>
+                        📍 {meeting.location}
+                      </Typography>
+                    )}
+                    {meeting.attendanceCount !== undefined && (
+                      <Typography variant='body2' color='text.secondary' mb={1}>
+                        👥 출석: {meeting.attendanceCount}명
+                      </Typography>
+                    )}
+                    <Typography variant='caption' color='text.secondary'>
+                      ⏰ 모임 기록일시: {formatDateTime(meeting.createdAt)}
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: 'space-between' }}>
+                    <Box>
+                      <IconButton
+                        onClick={() => handleEdit(meeting)}
+                        size='small'
+                      >
+                        <Edit />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleDelete(meeting)}
+                        size='small'
+                      >
+                        <Delete />
+                      </IconButton>
+                    </Box>
+                    <Button
+                      startIcon={<RemoveRedEye />}
+                      onClick={() => handleViewDetail(meeting)}
+                      size='small'
+                    >
+                      상세보기
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Box textAlign='center' py={4}>
+            <Typography variant='h5' gutterBottom>
+              등록된 미팅이 없습니다.
+            </Typography>
+            <Typography variant='body1' color='text.secondary' mb={3}>
+              새로운 미팅을 등록해 주세요.
+            </Typography>
+            <Button
+              variant='contained'
+              startIcon={<AddIcon />}
+              onClick={goToAttendanceInput}
+              className='common-button'
+            >
+              새 미팅 등록
+            </Button>
+          </Box>
+        )}
+      </Container>
 
       {/* 플로팅 추가 버튼 */}
       <Fab
         className='meeting-add-button'
-        onClick={() => navigate('/main/meeting-add')}
+        onClick={goToAttendanceInput}
         style={{
           position: 'fixed',
           bottom: 24,
@@ -295,9 +423,9 @@ const MeetingRecords: React.FC = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
               label='모임 제목'
-              value={formData.title || ''}
+              value={formData.activityName || ''}
               onChange={e =>
-                setFormData(prev => ({ ...prev, title: e.target.value }))
+                setFormData(prev => ({ ...prev, activityName: e.target.value }))
               }
               fullWidth
               required
@@ -311,26 +439,15 @@ const MeetingRecords: React.FC = () => {
               }
               fullWidth
               required
-              placeholder='예: 2025년 8월 17일 일요일'
-            />
-
-            <TextField
-              label='주차'
-              value={formData.week || ''}
-              onChange={e =>
-                setFormData(prev => ({ ...prev, week: e.target.value }))
-              }
-              fullWidth
-              required
-              placeholder='예: 8월 3주차'
+              placeholder='예: 2025-08-17'
             />
 
             <TextField
               label='모임 유형'
               select
-              value={formData.type || '청년예배'}
+              value={formData.category || '청년예배'}
               onChange={e =>
-                setFormData(prev => ({ ...prev, type: e.target.value as any }))
+                setFormData(prev => ({ ...prev, category: e.target.value }))
               }
               fullWidth
               required
@@ -341,17 +458,6 @@ const MeetingRecords: React.FC = () => {
                 </MenuItem>
               ))}
             </TextField>
-
-            <TextField
-              label='모임 기록일시'
-              value={formData.recordDate || ''}
-              onChange={e =>
-                setFormData(prev => ({ ...prev, recordDate: e.target.value }))
-              }
-              fullWidth
-              required
-              placeholder='예: 2025년 8월 18일 오전 07:28'
-            />
           </Box>
         </DialogContent>
         <DialogActions>
@@ -361,13 +467,31 @@ const MeetingRecords: React.FC = () => {
             variant='contained'
             className='common-button'
             disabled={
-              !formData.title ||
-              !formData.date ||
-              !formData.week ||
-              !formData.recordDate
+              !formData.activityName || !formData.date || !formData.category
             }
           >
             {editingMeeting ? '수정' : '추가'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 확인 다이얼로그 */}
+      <Dialog
+        open={dialog.open}
+        onClose={() => setDialog({ open: false, message: '' })}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>안내</DialogTitle>
+        <DialogContent>
+          <Typography>{dialog.message}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setDialog({ open: false, message: '' })}
+            className='common-button'
+          >
+            확인
           </Button>
         </DialogActions>
       </Dialog>

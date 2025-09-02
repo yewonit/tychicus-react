@@ -5,6 +5,7 @@ import axiosClient from '../../utils/axiosClient';
 interface OrganizationState {
   organizations: Organization[];
   members: Member[];
+  currentOrganizationId: string | null;
   loading: boolean;
   error: string | null;
 }
@@ -12,6 +13,7 @@ interface OrganizationState {
 const initialState: OrganizationState = {
   organizations: [],
   members: [],
+  currentOrganizationId: null,
   loading: false,
   error: null,
 };
@@ -70,6 +72,9 @@ const organizationSlice = createSlice({
     clearError: state => {
       state.error = null;
     },
+    setCurrentOrganizationId: (state, action: PayloadAction<string | null>) => {
+      state.currentOrganizationId = action.payload;
+    },
     addMember: (state, action: PayloadAction<Member>) => {
       state.members.push(action.payload);
     },
@@ -126,6 +131,6 @@ const organizationSlice = createSlice({
   },
 });
 
-export const { clearError, addMember, updateMember } =
+export const { clearError, setCurrentOrganizationId, addMember, updateMember } =
   organizationSlice.actions;
 export default organizationSlice.reducer;
